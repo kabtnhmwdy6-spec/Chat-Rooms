@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chat Rooms</title>
+<style>
+:root{--red:#ce1126;--green:#007a3d;--ink:#000;--paper:#fff;--bg:#f1f2f4;--text:#15171c;--muted:#7a808b;--line:#e3e5e9}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}
+html,body{height:100%;background:var(--bg);color:var(--text);overscroll-behavior:none}
+.screen{display:none;flex-direction:column;height:100dvh;max-width:560px;margin:0 auto;background:var(--paper)}
+.screen.on{display:flex}
+.flag{background:linear-gradient(var(--red) 33.4%,var(--paper) 33.4% 66.6%,var(--ink) 66.6%);display:flex;align-items:center;justify-content:center;border:1px solid var(--line)}
+.flag b{color:var(--green);font-weight:700;line-height:1}
+button{cursor:pointer;border:0;font-size:1rem}
+input{font-size:1rem;border:1px solid var(--line);border-radius:10px;padding:13px 14px;width:100%;background:var(--paper);color:var(--text);outline:none}
+input:focus{border-color:var(--red)}
+.btn{background:var(--red);color:#fff;border-radius:10px;padding:13px;width:100%;font-weight:700}
+.link{background:none;color:var(--red);padding:10px;font-weight:600}
+.err{color:var(--red);font-size:.9rem;min-height:1.2em;text-align:center}
+
+/* auth */
+#auth{justify-content:center;padding:24px;gap:14px;padding-top:calc(24px + env(safe-area-inset-top))}
+#auth .flag{width:168px;height:112px;margin:0 auto;border-radius:6px}
+#auth .flag b{font-size:1.5rem}
+#auth h1{text-align:center;font-size:2rem;letter-spacing:.5px;direction:ltr}
+#auth p.sub{text-align:center;color:var(--muted);margin-top:-8px}
+#auth input{direction:ltr;text-align:left}
+
+/* list */
+.top{display:flex;align-items:center;gap:10px;padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top));border-bottom:1px solid var(--line)}
+.top .flag{width:38px;height:26px;border-radius:3px}
+.top .flag b{font-size:.4rem}
+.top h2{flex:1;font-size:1.15rem;direction:ltr;text-align:right}
+.top .me{color:var(--muted);font-size:.85rem;direction:ltr}
+.top .out{background:none;color:var(--muted);font-size:.85rem}
+.search{display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.search input{direction:ltr;text-align:left}
+.search button{background:var(--ink);color:#fff;border-radius:10px;padding:0 18px;font-weight:700}
+#chats{flex:1;overflow-y:auto}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.row:active{background:var(--bg)}
+.av{width:48px;height:48px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.15rem;flex:none;text-transform:uppercase}
+.row .t{flex:1;min-width:0}
+.row .n{font-weight:700;direction:ltr;text-align:right}
+.row .l{color:var(--muted);font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.empty{padding:40px 24px;text-align:center;color:var(--muted);line-height:1.8}
+
+/* chat */
+#chat .top{gap:12px}
+#chat .back{background:none;font-size:1.5rem;padding:0 4px;color:var(--ink)}
+#msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:6px;background:var(--bg)}
+.m{max-width:78%;padding:9px 12px 6px;border-radius:14px;background:var(--paper);align-self:flex-end;border:1px solid var(--line);overflow-wrap:anywhere;line-height:1.5}
+.m.mine{align-self:flex-start;background:var(--red);color:#fff;border-color:var(--red)}
+.m small{display:block;font-size:.7rem;opacity:.65;margin-top:2px;direction:ltr;text-align:left}
+.send{display:flex;gap:8px;padding:10px 12px;padding-bottom:calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--paper)}
+.send button{background:var(--red);color:#fff;border-radius:50%;width:46px;height:46px;font-size:1.2rem;flex:none}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:.9rem;display:none;z-index:9}
+</style>
+</head>
+<body>
+
+<div id="auth" class="screen">
+  <div class="flag"><b>الله أكبر</b></div>
+  <h1>Chat Rooms</h1>
+  <p class="sub" id="sub">سجّل دخولك للتواصل</p>
+  <input id="uname" placeholder="username (a-z, 0-9, _)" autocapitalize="none" style="display:none">
+  <input id="email" type="email" placeholder="Email">
+  <input id="pass" type="password" placeholder="Password">
+  <div class="err" id="aerr"></div>
+  <button class="btn" id="go">دخول</button>
+  <button class="link" id="swap">ما عندك حساب؟ أنشئ حساب جديد</button>
+</div>
+
+<div id="list" class="screen">
+  <div class="top">
+    <div class="flag"><b>الله أكبر</b></div>
+    <h2>Chat Rooms</h2>
+    <span class="me" id="me"></span>
+    <button class="out" id="out">خروج</button>
+  </div>
+  <div class="search">
+    <input id="q" placeholder="@username" autocapitalize="none">
+    <button id="find">ابحث</button>
+  </div>
+  <div id="chats"></div>
+</div>
+
+<div id="chat" class="screen">
+  <div class="top">
+    <button class="back" id="back">→</button>
+    <div class="av" id="cav" style="width:40px;height:40px;font-size:1rem"></div>
+    <h2 id="ctitle"></h2>
+  </div>
+  <div id="msgs"></div>
+  <div class="send">
+    <input id="txt" placeholder="اكتب رسالة...">
+    <button id="snd">➤</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+// ===== إعدادات Firebase الخاصة بك =====
+const firebaseConfig = {
+  apiKey: "AIzaSyDgSJbOY4MW0Ge9Qg0emCHlD0PmGl1IDuI",
+  authDomain: "chat-rooms-427da.firebaseapp.com",
+  projectId: "chat-rooms-427da",
+  storageBucket: "chat-rooms-427da.firebasestorage.app",
+  messagingSenderId: "443493401556",
+  appId: "1:443493401556:web:902a85be1e9498df45cc41"
+};
+// ======================================
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth(), db = firebase.firestore(), TS = firebase.firestore.FieldValue.serverTimestamp;
+const $ = id => document.getElementById(id);
+let me = null, signup = false, busy = false, unList = null, unMsgs = null, cur = null;
+
+const show = n => ['auth', 'list', 'chat'].forEach(s => $(s).classList.toggle('on', s === n));
+const toast = t => { const e = $('toast'); e.textContent = t; e.style.display = 'block'; setTimeout(() => e.style.display = 'none', 2600); };
+const ERR = {
+  'auth/invalid-email': 'الايميل غير صحيح',
+  'auth/email-already-in-use': 'هذا الايميل مسجّل مسبقًا',
+  'auth/weak-password': 'كلمة المرور ضعيفة (6 أحرف على الأقل)',
+  'auth/invalid-credential': 'الايميل أو كلمة المرور خطأ',
+  'auth/wrong-password': 'الايميل أو كلمة المرور خطأ',
+  'auth/user-not-found': 'الايميل أو كلمة المرور خطأ',
+  'auth/network-request-failed': 'لا يوجد اتصال بالانترنت'
+};
+const aerr = t => $('aerr').textContent = t || '';
+
+$('swap').onclick = () => {
+  signup = !signup;
+  $('uname').style.display = signup ? '' : 'none';
+  $('go').textContent = signup ? 'إنشاء حساب' : 'دخول';
+  $('sub').textContent = signup ? 'اختر يوزرنيم ليجدك الناس به' : 'سجّل دخولك للتواصل';
+  $('swap').textContent = signup ? 'عندي حساب؟ سجّل دخول' : 'ما عندك حساب؟ أنشئ حساب جديد';
+  aerr();
+};
+
+$('go').onclick = async () => {
+  if (busy) return;
+  const email = $('email').value.trim(), pass = $('pass').value, uname = $('uname').value.trim().toLowerCase();
+  aerr(); busy = true;
+  try {
+    if (signup) {
+      if (!/^[a-z0-9_]{4,20}$/.test(uname)) { aerr('اليوزرنيم: من 4 إلى 20 حرف انجليزي أو رقم أو _'); busy = false; return; }
+      const cred = await auth.createUserWithEmailAndPassword(email, pass);
+      try {
+        await db.runTransaction(async t => {
+          const ref = db.doc('usernames/' + uname);
+          if ((await t.get(ref)).exists) throw new Error('taken');
+          t.set(ref, { uid: cred.user.uid });
+          t.set(db.doc('users/' + cred.user.uid), { username: uname });
+        });
+      } catch (e) {
+        await cred.user.delete();
+        aerr(e.message === 'taken' ? 'اليوزرنيم مأخوذ، جرّب غيره' : 'تعذّر حفظ الحساب، جرّب مرة ثانية');
+        busy = false; return;
+      }
+      busy = false; enter(cred.user);
+    } else {
+      await auth.signInWithEmailAndPassword(email, pass);
+      busy = false;
+    }
+  } catch (e) { busy = false; aerr(ERR[e.code] || 'حدث خطأ: ' + e.code); }
+};
+
+auth.onAuthStateChanged(u => { if (busy) return; u ? enter(u) : (cleanup(), show('auth')); });
+
+async function enter(u) {
+  const d = await db.doc('users/' + u.uid).get();
+  if (!d.exists) { await auth.signOut(); return; }
+  me = { uid: u.uid, username: d.data().username };
+  $('me').textContent = '@' + me.username;
+  show('list');
+  unList = db.collection('chats').where('members', 'array-contains', me.uid).onSnapshot(s => {
+    const rows = s.docs.map(x => ({ id: x.id, ...x.data() }))
+      .sort((a, b) => ((b.updatedAt && b.updatedAt.toMillis()) || 9e15) - ((a.updatedAt && a.updatedAt.toMillis()) || 9e15));
+    const box = $('chats'); box.innerHTML = '';
+    if (!rows.length) { box.innerHTML = '<div class="empty">ما عندك محادثات بعد.<br>ابحث عن صديقك باليوزرنيم بالأعلى وابدأ الدردشة.</div>'; return; }
+    rows.forEach(r => {
+      const other = r.members.find(x => x !== me.uid), name = (r.names && r.names[other]) || '?';
+      const el = document.createElement('div'); el.className = 'row';
+      el.innerHTML = '<div class="av"></div><div class="t"><div class="n"></div><div class="l"></div></div>';
+      el.querySelector('.av').textContent = name[0];
+      el.querySelector('.n').textContent = '@' + name;
+      el.querySelector('.l').textContent = r.lastMessage || '';
+      el.onclick = () => openChat(other, name);
+      box.appendChild(el);
+    });
+  });
+}
+
+function cleanup() { unList && unList(); unMsgs && unMsgs(); unList = unMsgs = null; me = null; cur = null; }
+$('out').onclick = () => auth.signOut();
+
+async function find() {
+  const name = $('q').value.trim().replace(/^@/, '').toLowerCase();
+  if (!name) return;
+  if (name === me.username) return toast('هذا حسابك أنت');
+  try {
+    const d = await db.doc('usernames/' + name).get();
+    if (!d.exists) return toast('ما لقينا مستخدم بهذا اليوزرنيم');
+    $('q').value = ''; openChat(d.data().uid, name);
+  } catch (e) { toast('تعذّر البحث، تأكد من الانترنت'); }
+}
+$('find').onclick = find;
+$('q').onkeydown = e => { if (e.key === 'Enter') find(); };
+
+function openChat(uid, name) {
+  cur = { id: [me.uid, uid].sort().join('_'), uid, name };
+  $('ctitle').textContent = '@' + name; $('cav').textContent = name[0];
+  $('msgs').innerHTML = ''; show('chat');
+  unMsgs && unMsgs();
+  unMsgs = db.collection('chats/' + cur.id + '/messages').orderBy('createdAt').onSnapshot(s => {
+    const box = $('msgs'); box.innerHTML = '';
+    s.docs.forEach(x => {
+      const m = x.data(), el = document.createElement('div');
+      el.className = 'm' + (m.from === me.uid ? ' mine' : '');
+      const p = document.createElement('span'); p.textContent = m.text;
+      const t = document.createElement('small');
+      t.textContent = m.createdAt ? m.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...';
+      el.append(p, t); box.appendChild(el);
+    });
+    box.scrollTop = box.scrollHeight;
+  }, () => toast('تعذّر تحميل الرسائل'));
+}
+$('back').onclick = () => { unMsgs && unMsgs(); unMsgs = null; show('list'); };
+
+async function send() {
+  const text = $('txt').value.trim();
+  if (!text || !cur) return;
+  $('txt').value = '';
+  try {
+    await db.doc('chats/' + cur.id).set({
+      members: [me.uid, cur.uid],
+      names: { [me.uid]: me.username, [cur.uid]: cur.name },
+      lastMessage: text, updatedAt: TS()
+    }, { merge: true });
+    await db.collection('chats/' + cur.id + '/messages').add({ text, from: me.uid, createdAt: TS() });
+  } catch (e) { toast('تعذّر الإرسال'); }
+}
+$('snd').onclick = send;
+$('txt').onkeydown = e => { if (e.key === 'Enter') send(); };
+</script>
+</body>
+</html>
