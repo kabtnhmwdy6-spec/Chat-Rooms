@@ -145,6 +145,14 @@ input:focus{border-color:var(--acc)}
 #chat .m{background:rgba(24,37,51,.88);color:#f5f5f5}
 #chat .m.mine{background:rgba(43,82,120,.92)}
 #chat .send input{background:rgba(255,255,255,.08);border-color:rgba(217,183,122,.35);color:#fff}
+  /* ===== تصغير مستطيلات المحادثات ===== */
+#chats .row{margin:0 12px 16px;padding:7px 12px;border-radius:12px}
+#chats .row::after{bottom:-12px;height:6px}
+#chats .row .av{width:42px;height:42px;font-size:1rem;border-width:2px}
+#chats .row .n{font-size:1rem}
+#chats .row .d{font-size:.75rem}
+#chats .row .l{font-size:.85rem;margin-top:2px}
+#list .top h2{white-space:nowrap;font-size:1.1rem}
 </style>
 </head>
 <body>
