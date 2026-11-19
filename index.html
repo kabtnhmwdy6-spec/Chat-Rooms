@@ -959,6 +959,120 @@ $('cmute').onclick = () => {
     im.src = u;
   };
 })();
+  /* ===== معاينة قبل الإرسال + فيديو ===== */
+(function () {
+  const CLOUD = 'ضع_اسم_الكلاود', PRESET = 'ضع_اسم_البريسيت';
+  const old = $('att'), at = old.cloneNode(true);
+  old.replaceWith(at);
+  const msgs = $('msgs');
+  const pick = document.createElement('input');
+  pick.type = 'file'; pick.accept = 'image/*,video/*'; pick.style.display = 'none';
+  document.body.appendChild(pick);
+  at.onclick = () => pick.click();
+
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:50;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px';
+  ov.innerHTML = "<div id='pvbox' style='flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center'></div><div id='pvst' style='color:#cfd8e5;font-size:.9rem;min-height:1.2em'></div><div style='display:flex;gap:12px;width:100%;max-width:420px'><button id='pvno' style='flex:1;padding:13px;border-radius:12px;background:#ffffff26;color:#fff'>إلغاء</button><button id='pvok' style='flex:1;padding:13px;border-radius:12px;background:#3390ec;color:#fff;font-weight:700'>إرسال ➤</button></div>";
+  document.body.appendChild(ov);
+  const box = ov.querySelector('#pvbox'), pst = ov.querySelector('#pvst'), no = ov.querySelector('#pvno'), ok = ov.querySelector('#pvok');
+  let file = null, url = null, sending = false;
+  const close = () => { if (sending) return; ov.style.display = 'none'; box.innerHTML = ''; pst.textContent = ''; url && URL.revokeObjectURL(url); file = url = null; };
+  no.onclick = close;
+
+  pick.onchange = () => {
+    const f = pick.files[0]; pick.value = '';
+    if (!f || !cur) return;
+    if (me.prefs.blocked.includes(cur.uid)) return toast('هذا المستخدم محظور');
+    const isV = f.type.startsWith('video/'), isI = f.type.startsWith('image/');
+    if (!isV && !isI) return toast('اختار صورة أو فيديو');
+    if (isV && f.size > 50 * 1048576) return toast('الفيديو أكبر من 50MB');
+    file = f; url = URL.createObjectURL(f);
+    const el = document.createElement(isV ? 'video' : 'img');
+    el.src = url; el.style.cssText = 'max-width:100%;max-height:100%;border-radius:12px';
+    if (isV) { el.controls = true; el.playsInline = true; }
+    box.innerHTML = ''; box.appendChild(el);
+    pst.textContent = isV ? (f.size / 1048576).toFixed(1) + ' MB' : '';
+    ov.style.display = 'flex';
+  };
+
+  const compress = f => new Promise((res, rej) => {
+    const im = new Image(), u = URL.createObjectURL(f);
+    im.onload = () => {
+      const k = Math.min(1, 900 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+      c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg', 0.65));
+    };
+    im.onerror = rej; im.src = u;
+  });
+
+  const upload = f => new Promise((res, rej) => {
+    const x = new XMLHttpRequest(), fd = new FormData();
+    fd.append('file', f); fd.append('upload_preset', PRESET);
+    x.open('POST', 'https://api.cloudinary.com/v1_1/' + CLOUD + '/video/upload');
+    x.upload.onprogress = e => { if (e.lengthComputable) pst.textContent = 'جاري الرفع ' + Math.round(e.loaded / e.total * 100) + '%'; };
+    x.onload = () => { try { const j = JSON.parse(x.responseText); j.secure_url ? res(j.secure_url) : rej(new Error('up')); } catch (e) { rej(e); } };
+    x.onerror = () => rej(new Error('net'));
+    x.send(fd);
+  });
+
+  const sendMsg = async (extra, label) => {
+    await db.doc('chats/' + cur.id).set({
+      members: [me.uid, cur.uid],
+      names: { [me.uid]: me.name || me.username, [cur.uid]: cur.name },
+      lastMessage: label, lastFrom: me.uid, updatedAt: TS()
+    }, { merge: true });
+    await db.collection('chats/' + cur.id + '/messages').add(Object.assign({ text: label, from: me.uid, createdAt: TS(), read: false }, extra));
+  };
+
+  ok.onclick = async () => {
+    if (!file || sending) return;
+    const f = file, isV = f.type.startsWith('video/');
+    sending = true; ok.disabled = true;
+    try {
+      if (isV) {
+        if (CLOUD.startsWith('ضع')) throw new Error('cfg');
+        await sendMsg({ vid: await upload(f) }, '🎬 فيديو');
+      } else {
+        await sendMsg({ img: await compress(f) }, '📷 صورة');
+      }
+      sending = false; ok.disabled = false; close();
+    } catch (e) {
+      sending = false; ok.disabled = false;
+      pst.textContent = e.message === 'cfg' ? 'لازم تحط اسم Cloudinary بالكود أول' : 'تعذّر الإرسال، جرّب مرة ثانية';
+    }
+  };
+
+  /* عرض الفيديوهات */
+  let vids = [], unV = null;
+  const paintV = () => {
+    vobs.disconnect();
+    [...msgs.children].forEach((el, i) => {
+      const o = el.querySelector('.pv'); if (o) o.remove();
+      const src = vids[i]; if (!src) return;
+      const tx = el.querySelector(':scope > span'); if (tx) tx.textContent = '';
+      const v = document.createElement('video');
+      v.className = 'pv'; v.src = src; v.controls = true; v.preload = 'metadata'; v.playsInline = true;
+      v.style.cssText = 'max-width:100%;border-radius:10px;display:block;margin-bottom:4px';
+      v.onclick = e => e.stopPropagation();
+      el.insertBefore(v, el.querySelector('small'));
+    });
+    vobs.observe(msgs, { childList: true });
+  };
+  const vobs = new MutationObserver(paintV);
+  vobs.observe(msgs, { childList: true });
+
+  const _oc = openChat;
+  openChat = function (uid, name) {
+    _oc(uid, name);
+    vids = []; unV && unV();
+    unV = db.collection('chats/' + cur.id + '/messages').orderBy('createdAt').onSnapshot(s => {
+      vids = s.docs.map(x => x.data().vid || null);
+      setTimeout(paintV, 200);
+    }, () => {});
+  };
+  $('back').addEventListener('click', () => { unV && unV(); unV = null; });
+})();
    </script>
 </body>
         </html>
