@@ -138,6 +138,15 @@ input:focus{border-color:var(--acc)}
 #list .nav{background:rgba(8,14,28,.88);border:1.5px solid #c9a15a;border-bottom:0;border-radius:22px 22px 0 0;margin:0 6px}
 #list .nav button{color:#b9c2d0}
 #list .nav button.on{color:#6ab3f3;text-shadow:0 0 10px rgba(106,179,243,.7)}
+
+/* ===== تصغير مستطيلات المحادثات ===== */
+#chats .row{margin:0 12px 16px;padding:7px 12px;border-radius:12px}
+#chats .row::after{bottom:-12px;height:6px}
+#chats .row .av{width:42px;height:42px;font-size:1rem;border-width:2px}
+#chats .row .n{font-size:1rem}
+#chats .row .d{font-size:.75rem}
+#chats .row .l{font-size:.85rem;margin-top:2px}
+#list .top h2{white-space:nowrap;font-size:1.1rem}
 </style>
 </head>
 <body>
@@ -847,4 +856,4 @@ $('cmute').onclick = () => {
 };
 </script>
 </body>
-          </html>
+</html>
