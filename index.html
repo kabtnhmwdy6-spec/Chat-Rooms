@@ -1073,6 +1073,100 @@ $('cmute').onclick = () => {
   };
   $('back').addEventListener('click', () => { unV && unV(); unV = null; });
 })();
+  /* ===== رسائل صوتية ===== */
+(function () {
+  const msgs = $('msgs'), send = document.querySelector('#chat .send');
+  const mic = document.createElement('button');
+  mic.type = 'button'; mic.textContent = '🎤';
+  mic.style.cssText = 'background:none;font-size:1.4rem;width:40px;flex:none';
+  send.insertBefore(mic, $('snd'));
+
+  const bar = document.createElement('div');
+  bar.style.cssText = 'display:none;align-items:center;gap:12px;padding:10px 14px;background:rgba(11,19,34,.92);border-top:1px solid rgba(217,183,122,.25);color:#fff;direction:ltr';
+  bar.innerHTML = "<button class='rx' style='font-size:1.3rem;color:#e5484d'>✕</button><span class='rt' style='flex:1;text-align:center'>🔴 0:00</span><button class='rs' style='background:#3390ec;color:#fff;width:44px;height:44px;border-radius:50%'>➤</button>";
+  send.parentNode.insertBefore(bar, send);
+  const rt = bar.querySelector('.rt');
+
+  const MAX = 60; // ثانية، حتى ما نتجاوز حد Firestore (1MB)
+  let rec = null, stream = null, chunks = [], t0 = 0, tick = null, cancelled = false, chat = null, mime = '';
+
+  async function start() {
+    if (rec || !cur) return;
+    if (me.prefs.blocked.includes(cur.uid)) return toast('هذا المستخدم محظور');
+    if (call) return toast('أنت داخل مكالمة');
+    if (!navigator.mediaDevices || !window.MediaRecorder) return toast('المتصفح ما يدعم التسجيل');
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+    catch (e) { return toast('لازم تسمح للمايك'); }
+    mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'].find(t => MediaRecorder.isTypeSupported(t)) || '';
+    const o = { audioBitsPerSecond: 24000 }; if (mime) o.mimeType = mime;
+    chat = cur; chunks = []; cancelled = false;
+    rec = new MediaRecorder(stream, o);
+    rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+    rec.onstop = finish;
+    rec.start(); t0 = Date.now();
+    send.style.display = 'none'; bar.style.display = 'flex';
+    tick = setInterval(() => {
+      const s = Math.floor((Date.now() - t0) / 1000);
+      rt.textContent = '🔴 ' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+      if (s >= MAX) stop(false);
+    }, 250);
+  }
+  function stop(cancel) {
+    if (!rec) return;
+    cancelled = cancel; clearInterval(tick);
+    if (rec.state !== 'inactive') rec.stop();
+  }
+  async function finish() {
+    const dur = (Date.now() - t0) / 1000;
+    const type = (rec.mimeType || mime || 'audio/webm').split(';')[0];
+    stream.getTracks().forEach(t => t.stop());
+    rec = stream = null;
+    bar.style.display = 'none'; send.style.display = ''; rt.textContent = '🔴 0:00';
+    if (cancelled || dur < 1) return;
+    const aud = await new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(new Blob(chunks, { type })); });
+    if (aud.length > 900000) return toast('التسجيل طويل، قصّره');
+    try {
+      await db.doc('chats/' + chat.id).set({
+        members: [me.uid, chat.uid],
+        names: { [me.uid]: me.name || me.username, [chat.uid]: chat.name },
+        lastMessage: '🎤 رسالة صوتية', lastFrom: me.uid, updatedAt: TS()
+      }, { merge: true });
+      await db.collection('chats/' + chat.id + '/messages').add({ text: '🎤 رسالة صوتية', aud, from: me.uid, createdAt: TS(), read: false });
+    } catch (e) { toast('تعذّر إرسال الصوت'); }
+  }
+  mic.onclick = start;
+  bar.querySelector('.rx').onclick = () => stop(true);
+  bar.querySelector('.rs').onclick = () => stop(false);
+
+  /* عرض الرسائل الصوتية */
+  let auds = [], unA = null;
+  const paint = () => {
+    obs.disconnect();
+    [...msgs.children].forEach((el, i) => {
+      const a = auds[i]; if (!a || el.querySelector('.pa')) return;
+      const tx = el.querySelector(':scope > span'); if (tx) tx.style.display = 'none';
+      const au = document.createElement('audio');
+      au.className = 'pa'; au.controls = true; au.preload = 'metadata'; au.src = a;
+      au.style.cssText = 'width:230px;max-width:100%;height:40px;display:block;margin-bottom:2px';
+      au.onclick = e => e.stopPropagation();
+      el.insertBefore(au, el.querySelector('small'));
+    });
+    obs.observe(msgs, { childList: true });
+  };
+  const obs = new MutationObserver(paint);
+  obs.observe(msgs, { childList: true });
+
+  const _oc = openChat;
+  openChat = function (uid, name) {
+    _oc(uid, name);
+    auds = []; unA && unA();
+    unA = db.collection('chats/' + cur.id + '/messages').orderBy('createdAt').onSnapshot(s => {
+      auds = s.docs.map(x => x.data().aud || null);
+      setTimeout(paint, 250);
+    }, () => {});
+  };
+  $('back').addEventListener('click', () => { unA && unA(); unA = null; stop(true); });
+})();
    </script>
 </body>
         </html>
