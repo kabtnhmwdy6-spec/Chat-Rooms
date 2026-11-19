@@ -26,8 +26,11 @@ input:focus{border-color:var(--acc)}
 #auth input{direction:ltr;text-align:left}
 .top{display:flex;align-items:center;gap:10px;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top));background:var(--hd);border-bottom:1px solid var(--line)}
 .top h2{flex:1;font-size:1.1rem;direction:ltr;text-align:right}
+.top.ct{direction:ltr}
+.ct h2{text-align:left;unicode-bidi:plaintext;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .top .me{color:var(--muted);font-size:.85rem;direction:ltr}
 .ic{font-size:1.25rem;padding:4px 6px;color:var(--muted)}
+.back{font-size:1.5rem;color:var(--acc);padding:0 4px}
 .search{display:flex;gap:8px;padding:8px 12px}
 .search input{direction:ltr;text-align:left;border-radius:20px;padding:10px 16px;background:var(--chat);border-color:transparent}
 .search button{background:var(--acc);color:#fff;border-radius:20px;padding:0 18px;font-weight:700}
@@ -42,8 +45,10 @@ input:focus{border-color:var(--acc)}
 .row .l{color:var(--muted);font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
 .empty{padding:48px 24px;text-align:center;color:var(--muted);line-height:1.9}
 #prof{display:none;flex:1;overflow-y:auto;padding:28px 20px;flex-direction:column;align-items:center;gap:16px}
+#sett{display:none;flex:1;overflow-y:auto}
 #list[data-v=p] #prof{display:flex}
-#list[data-v=p] .search,#list[data-v=p] #chats{display:none}
+#list[data-v=s] #sett{display:block}
+#list:not([data-v=c]) .search,#list:not([data-v=c]) #chats{display:none}
 .pav{position:relative;width:112px;height:112px}
 .pav .av{width:112px;height:112px;font-size:2.8rem}
 .pav label{position:absolute;bottom:0;inset-inline-end:0;background:var(--acc);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:3px solid var(--bg)}
@@ -51,13 +56,19 @@ input:focus{border-color:var(--acc)}
 .nm button{background:var(--acc);color:#fff;border-radius:12px;padding:0 18px;font-weight:700}
 .info{width:100%;border-top:1px solid var(--line)}
 .info div{display:flex;justify-content:space-between;align-items:center;padding:15px 4px;border-bottom:1px solid var(--line);cursor:pointer}
-.info small{color:var(--muted);font-size:.85rem}
+.info small,.kv small{color:var(--muted);font-size:.85rem}
 .info b{direction:ltr;letter-spacing:1px}
+.mi{display:flex;align-items:center;gap:14px;padding:16px 18px;border-bottom:1px solid var(--line);width:100%;text-align:start}
+.mi span{font-size:1.3rem}
+.page{flex:1;overflow-y:auto;padding-bottom:20px}
+.sec{padding:18px 18px 8px;color:var(--acc);font-weight:700;font-size:.9rem}
+.kv{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.kv b{direction:ltr;overflow-wrap:anywhere;font-weight:600}
+.kv button{color:var(--acc);font-weight:700}
 .nav{display:flex;border-top:1px solid var(--line);background:var(--hd);padding-bottom:env(safe-area-inset-bottom)}
 .nav button{flex:1;padding:8px 0 6px;color:var(--muted);font-size:.75rem;display:flex;flex-direction:column;align-items:center;gap:2px}
 .nav button span{font-size:1.35rem}
 .nav button.on{color:var(--acc);font-weight:700}
-#chat .back{font-size:1.5rem;color:var(--acc);padding:0 4px}
 #msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:4px;background:var(--chat)}
 .m{max-width:80%;padding:6px 10px 4px;border-radius:14px;background:var(--other);align-self:flex-end;overflow-wrap:anywhere;line-height:1.5;border-bottom-left-radius:4px;box-shadow:0 1px 1px rgba(0,0,0,.08);cursor:pointer}
 .m.mine{align-self:flex-start;background:var(--mine);border-bottom-left-radius:14px;border-bottom-right-radius:4px}
@@ -80,7 +91,15 @@ input:focus{border-color:var(--acc)}
 #sheet div{background:var(--sheet);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:8px 0 calc(8px + env(safe-area-inset-bottom))}
 #sheet button{display:block;width:100%;text-align:start;padding:15px 22px}
 #sheet button.del{color:#e5484d}
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#000c;color:#fff;padding:10px 16px;border-radius:10px;font-size:.9rem;display:none;z-index:10}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#000c;color:#fff;padding:10px 16px;border-radius:10px;font-size:.9rem;display:none;z-index:30;max-width:90%}
+#call{position:fixed;inset:0;background:linear-gradient(#1c2a3a,#0e1621);color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:20}
+#call.on{display:flex}
+#call .av{width:130px;height:130px;font-size:3.2rem}
+#cvs{color:#9fb3c8}
+.cb{display:flex;gap:26px;margin-top:30px}
+.cb button{width:68px;height:68px;border-radius:50%;font-size:1.6rem;background:#ffffff26;color:#fff}
+#cacc{background:#3fb950}
+#cend{background:#e5484d}
 </style>
 </head>
 <body>
@@ -114,21 +133,27 @@ input:focus{border-color:var(--acc)}
     <div class='pav'><div class='av' id='pav'></div><label for='pfile'>📷</label><input id='pfile' type='file' accept='image/*' style='display:none'></div>
     <div class='nm'><input id='pname' maxlength='30' placeholder='اسمك'><button id='psave'>حفظ</button></div>
     <div class='info'>
-      <div id='cpun'><small>اليوزرنيم</small><b id='pun'></b></div>
+      <div><small>اليوزرنيم</small><b id='pun'></b></div>
       <div id='cpid'><small>الايدي (اضغط للنسخ)</small><b id='ppid'>...</b></div>
     </div>
+  </div>
+  <div id='sett'>
+    <button class='mi' id='sprv'><span>🔒</span>الخصوصية والأمان</button>
   </div>
   <div class='nav'>
     <button id='t1' class='on'><span>💬</span>المحادثات</button>
     <button id='t2'><span>👤</span>الملف الشخصي</button>
+    <button id='t3'><span>⚙️</span>الإعدادات</button>
   </div>
 </div>
 
 <div id='chat' class='screen'>
-  <div class='top'>
-    <button class='back' id='back'>→</button>
-    <div class='av' id='cav' style='width:40px;height:40px;font-size:1rem'></div>
+  <div class='top ct'>
+    <button class='back' id='back'>←</button>
+    <div class='av' id='cav' style='width:40px;height:40px;font-size:1rem;cursor:pointer'></div>
     <h2 id='ctitle'></h2>
+    <button class='ic' id='ccall'>📞</button>
+    <button class='ic' id='cmenu'>⋮</button>
   </div>
   <div id='msgs'></div>
   <div id='bar'><div><b id='bt'></b><span id='bs'></span></div><button class='ic' id='bx'>✕</button></div>
@@ -137,6 +162,45 @@ input:focus{border-color:var(--acc)}
     <button id='snd'>➤</button>
   </div>
 </div>
+
+<div id='info' class='screen'>
+  <div class='top ct'><button class='back' id='iback'>←</button><h2>معلومات</h2></div>
+  <div class='page'>
+    <div style='display:flex;flex-direction:column;align-items:center;padding:24px;gap:8px'>
+      <div class='av' id='iav' style='width:110px;height:110px;font-size:2.8rem'></div>
+      <h2 id='iname'></h2>
+    </div>
+    <div class='sec'>الاسم عندك فقط (ما يشوفه غيرك)</div>
+    <div class='nm' style='padding:0 18px'><input id='iedit' maxlength='30' placeholder='اكتب اسم تريده'><button id='isave'>حفظ</button></div>
+    <div class='sec'>المعلومات</div>
+    <div class='kv'><small>الاسم الأصلي</small><b id='ior'></b></div>
+    <div class='kv'><small>الايدي</small><b id='ipid'></b></div>
+    <div class='kv'><small>اليوزرنيم</small><b id='iun'></b></div>
+  </div>
+</div>
+
+<div id='priv' class='screen'>
+  <div class='top ct'><button class='back' id='pback'>←</button><h2>الخصوصية والأمان</h2></div>
+  <div class='page'>
+    <div class='sec'>حساب تسجيل الدخول</div>
+    <div class='kv'><small>البريد</small><b id='pem'></b></div>
+    <div class='kv'><small>كلمة المرور (مخفية لأمانك)</small><b>••••••••</b></div>
+    <div style='padding:12px 18px'>
+      <div class='err' id='pwm'></div>
+      <button class='btn' id='pwb'>تغيير كلمة المرور (رابط على الايميل)</button>
+    </div>
+    <div class='sec'>المستخدمون المحظورون</div>
+    <div id='blist'></div>
+  </div>
+</div>
+
+<div id='call'>
+  <div class='av' id='cvav'></div>
+  <h2 id='cvn'></h2>
+  <p id='cvs'></p>
+  <div class='cb'><button id='cmute'>🎙</button><button id='cacc'>📞</button><button id='cend'>✖</button></div>
+</div>
+<audio id='rem' autoplay></audio>
 
 <div id='sheet'><div id='sbox'></div></div>
 <div class='toast' id='toast'></div>
@@ -154,9 +218,9 @@ const firebaseConfig = {
   appId: '1:443493401556:web:902a85be1e9498df45cc41'
 };
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth(), db = firebase.firestore(), TS = firebase.firestore.FieldValue.serverTimestamp;
+const auth = firebase.auth(), db = firebase.firestore(), TS = firebase.firestore.FieldValue.serverTimestamp, FV = firebase.firestore.FieldValue;
 const $ = id => document.getElementById(id);
-let me = null, signup = false, busy = false, unList = null, unMsgs = null, cur = null, rep = null, edt = null;
+let me = null, signup = false, busy = false, unList = null, unMsgs = null, callUn = null, cur = null, rep = null, edt = null, call = null;
 
 /* theme */
 const setTheme = t => { document.documentElement.dataset.t = t; $('theme').textContent = t === 'dark' ? '☀' : '☾'; try { localStorage.setItem('t', t); } catch (e) {} };
@@ -171,9 +235,8 @@ const avatar = (el, n, photo) => {
   else { el.textContent = n[0] || '?'; el.style.background = col(n); }
 };
 const hm = ts => ts ? ts.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-
-const show = n => ['auth', 'list', 'chat'].forEach(s => $(s).classList.toggle('on', s === n));
-const toast = t => { const e = $('toast'); e.textContent = t; e.style.display = 'block'; setTimeout(() => e.style.display = 'none', 2400); };
+const show = n => ['auth', 'list', 'chat', 'info', 'priv'].forEach(s => $(s).classList.toggle('on', s === n));
+const toast = (t, ms) => { const e = $('toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(e._t); e._t = setTimeout(() => e.style.display = 'none', ms || 2400); };
 const ERR = {
   'auth/invalid-email': 'الايميل غير صحيح',
   'auth/email-already-in-use': 'هذا الايميل مسجّل مسبقًا',
@@ -186,7 +249,7 @@ const ERR = {
 };
 const aerr = (t, ok) => { $('aerr').textContent = t || ''; $('aerr').classList.toggle('ok', !!ok); $('resend').style.display = 'none'; };
 
-/* users cache */
+/* users cache + names */
 const uc = {};
 async function getU(uid) {
   const c = uc[uid];
@@ -194,7 +257,17 @@ async function getU(uid) {
   try { const d = await db.doc('users/' + uid).get(); const x = d.exists ? d.data() : {}; uc[uid] = { t: Date.now(), d: x }; return x; }
   catch (e) { return {}; }
 }
+const dn = (uid, u) => (me && me.prefs.contacts[uid]) || u.name || u.username || '?';
 
+function sheet(items) {
+  const b = $('sbox'); b.innerHTML = '';
+  items.forEach(i => { const x = document.createElement('button'); x.textContent = i.l; if (i.c) x.className = i.c; x.onclick = () => { $('sheet').classList.remove('on'); i.f(); }; b.appendChild(x); });
+  const c = document.createElement('button'); c.textContent = 'إلغاء'; c.onclick = () => $('sheet').classList.remove('on'); b.appendChild(c);
+  $('sheet').classList.add('on');
+}
+$('sheet').onclick = e => { if (e.target.id === 'sheet') $('sheet').classList.remove('on'); };
+
+/* auth */
 function setMode(v) {
   signup = v;
   $('uname').style.display = signup ? '' : 'none';
@@ -258,13 +331,14 @@ $('go').onclick = async () => {
 
 auth.onAuthStateChanged(u => { if (busy) return; if (u && !u.emailVerified) { auth.signOut(); return; } u ? enter(u) : (cleanup(), show('auth')); });
 
-/* tabs + profile */
+/* tabs + profile + settings */
 function tab(v) {
   $('list').dataset.v = v;
-  $('t1').classList.toggle('on', v !== 'p'); $('t2').classList.toggle('on', v === 'p');
+  ['c', 'p', 's'].forEach((k, i) => $('t' + (i + 1)).classList.toggle('on', k === v));
 }
 $('t1').onclick = () => tab('c');
 $('t2').onclick = () => { renderProf(); tab('p'); };
+$('t3').onclick = () => tab('s');
 function renderProf() {
   if (!me) return;
   avatar($('pav'), me.name || me.username, me.photo);
@@ -311,24 +385,64 @@ $('pfile').onchange = e => {
 };
 $('cpid').onclick = () => { if (me && me.pid && navigator.clipboard) navigator.clipboard.writeText(me.pid).then(() => toast('تم نسخ الايدي'), () => {}); };
 
+$('sprv').onclick = () => { $('pem').textContent = auth.currentUser.email; $('pwm').textContent = ''; renderBl(); show('priv'); };
+$('pback').onclick = () => show('list');
+$('pwb').onclick = async () => {
+  try { await auth.sendPasswordResetEmail(auth.currentUser.email); $('pwm').className = 'err ok'; $('pwm').textContent = 'تم إرسال رابط تغيير كلمة المرور لإيميلك'; }
+  catch (e) { $('pwm').className = 'err'; $('pwm').textContent = 'تعذّر الإرسال، جرّب لاحقًا'; }
+};
+function renderBl() {
+  const box = $('blist'); box.innerHTML = '';
+  if (!me.prefs.blocked.length) { box.innerHTML = `<div class='empty'>ما عندك مستخدمين محظورين</div>`; return; }
+  me.prefs.blocked.forEach(async id => {
+    const u = await getU(id), r = document.createElement('div'); r.className = 'kv';
+    const n = document.createElement('b'); n.textContent = dn(id, u);
+    const b = document.createElement('button'); b.textContent = 'إلغاء الحظر';
+    b.onclick = async () => { await togg('blocked', id); renderBl(); };
+    r.append(n, b); box.appendChild(r);
+  });
+}
+async function togg(k, id) {
+  const has = me.prefs[k].includes(id);
+  try {
+    await db.doc('prefs/' + me.uid).set({ [k]: has ? FV.arrayRemove(id) : FV.arrayUnion(id) }, { merge: true });
+    me.prefs[k] = has ? me.prefs[k].filter(x => x !== id) : [...me.prefs[k], id];
+    toast(k === 'muted' ? (has ? 'تم إلغاء الكتم' : 'تم كتم الإشعارات') : (has ? 'تم إلغاء الحظر' : 'تم حظر المستخدم'));
+  } catch (e) { toast('تعذّر التنفيذ'); }
+}
+
+/* enter */
 async function enter(u) {
-  unList && unList(); unMsgs && unMsgs(); unList = unMsgs = null;
+  unList && unList(); unMsgs && unMsgs(); callUn && callUn(); unList = unMsgs = callUn = null;
   const d = await db.doc('users/' + u.uid).get();
   if (!d.exists) { await auth.signOut(); return; }
   const x = d.data();
-  me = { uid: u.uid, username: x.username, name: x.name, photo: x.photo, pid: x.pid };
+  let pf = {};
+  try { const pd = await db.doc('prefs/' + u.uid).get(); pf = pd.exists ? pd.data() : {}; } catch (e) {}
+  me = { uid: u.uid, username: x.username, name: x.name, photo: x.photo, pid: x.pid, prefs: { blocked: pf.blocked || [], muted: pf.muted || [], contacts: pf.contacts || {} } };
   $('me').textContent = '@' + me.username;
   tab('c'); renderProf(); show('list');
   ensurePid().then(renderProf);
+  let first = true;
   unList = db.collection('chats').where('members', 'array-contains', me.uid).onSnapshot(s => {
-    const rows = s.docs.map(x => ({ id: x.id, ...x.data() }))
+    if (!first) s.docChanges().forEach(ch => {
+      if (ch.type === 'removed') return;
+      const r = ch.doc.data();
+      if (!r.lastMessage || !r.lastFrom || r.lastFrom === me.uid) return;
+      const o = r.members.find(y => y !== me.uid);
+      if (me.prefs.muted.includes(o) || me.prefs.blocked.includes(o)) return;
+      if (cur && cur.uid === o && !document.hidden) return;
+      notify(o, r.lastMessage);
+    });
+    first = false;
+    const rows = s.docs.map(y => ({ id: y.id, ...y.data() }))
       .sort((a, b) => ((b.updatedAt && b.updatedAt.toMillis()) || 9e15) - ((a.updatedAt && a.updatedAt.toMillis()) || 9e15));
     const box = $('chats'); box.innerHTML = '';
-    if (!rows.length) { box.innerHTML = '<div class="empty">ما عندك محادثات بعد.<br>ابحث عن صديقك باليوزرنيم أو الايدي بالأعلى وابدأ الدردشة.</div>'; return; }
+    if (!rows.length) { box.innerHTML = `<div class='empty'>ما عندك محادثات بعد.<br>ابحث عن صديقك باليوزرنيم أو الايدي بالأعلى وابدأ الدردشة.</div>`; return; }
     rows.forEach(r => {
-      const other = r.members.find(x => x !== me.uid), name = (r.names && r.names[other]) || '?';
+      const other = r.members.find(y => y !== me.uid), name = (r.names && r.names[other]) || '?';
       const el = document.createElement('div'); el.className = 'row';
-      el.innerHTML = '<div class="av"></div><div class="t"><div class="h"><div class="n"></div><div class="d"></div></div><div class="l"></div></div>';
+      el.innerHTML = `<div class='av'></div><div class='t'><div class='h'><div class='n'></div><div class='d'></div></div><div class='l'></div></div>`;
       avatar(el.querySelector('.av'), name);
       el.querySelector('.n').textContent = name;
       el.querySelector('.d').textContent = hm(r.updatedAt);
@@ -336,18 +450,39 @@ async function enter(u) {
       el.onclick = () => openChat(other, name);
       box.appendChild(el);
       getU(other).then(u2 => {
-        const nm = u2.name || u2.username || name;
+        const nm = dn(other, u2);
         el.querySelector('.n').textContent = nm;
         avatar(el.querySelector('.av'), nm, u2.photo);
         el.onclick = () => openChat(other, nm);
       });
     });
   });
+  callUn = db.collection('calls').where('to', '==', me.uid).where('status', '==', 'ringing').onSnapshot(s => s.docChanges().forEach(async c => {
+    if (c.type !== 'added') return;
+    const x2 = c.doc.data(), t = x2.createdAt ? x2.createdAt.toMillis() : Date.now();
+    if (Date.now() - t > 45000) return;
+    if (call || me.prefs.blocked.includes(x2.from)) { c.doc.ref.update({ status: 'declined' }).catch(() => {}); return; }
+    const u2 = await getU(x2.from), id = c.doc.id;
+    call = { role: 'callee', id, unsubs: [], uid: x2.from, offer: x2.offer };
+    callUI(dn(x2.from, u2), u2.photo, 'مكالمة صوتية واردة...', 'in');
+    navigator.vibrate && navigator.vibrate([300, 200, 300, 200, 300]);
+    call.unsubs.push(c.doc.ref.onSnapshot(d2 => { const y = d2.data(); if (y && y.status === 'ended' && call && call.id === id) endCall(true); }));
+  }));
 }
 
-function cleanup() { unList && unList(); unMsgs && unMsgs(); unList = unMsgs = null; me = null; cur = null; }
+function cleanup() { unList && unList(); unMsgs && unMsgs(); callUn && callUn(); unList = unMsgs = callUn = null; endCall(true); me = null; cur = null; }
 $('out').onclick = () => auth.signOut();
 
+/* notifications (while app is open) */
+document.addEventListener('click', () => { if (window.Notification && Notification.permission === 'default') Notification.requestPermission(); }, { once: true });
+async function notify(uid, text) {
+  const u = await getU(uid), n = dn(uid, u);
+  toast('💬 ' + n + ': ' + text.slice(0, 40), 3500);
+  navigator.vibrate && navigator.vibrate(120);
+  if (document.hidden && window.Notification && Notification.permission === 'granted') { try { new Notification(n, { body: text }); } catch (e) {} }
+}
+
+/* search */
 async function find() {
   const raw = $('q').value.trim().replace(/^@/, '').toLowerCase();
   if (!raw) return;
@@ -358,7 +493,7 @@ async function find() {
       if (!d.exists) return toast('ما لقينا مستخدم بهذا الايدي');
       uid = d.data().uid;
       if (uid === me.uid) return toast('هذا حسابك أنت');
-      const u = await getU(uid); name = u.name || u.username || '?';
+      const u = await getU(uid); name = dn(uid, u);
     } else {
       if (raw === me.username) return toast('هذا حسابك أنت');
       const d = await db.doc('usernames/' + raw).get();
@@ -379,27 +514,66 @@ function setBar(kind, title, text) {
 function clearBar() { rep = edt = null; setBar(null); }
 $('bx').onclick = () => { if (edt) $('txt').value = ''; clearBar(); };
 
-/* message actions */
 function menu(id, m) {
-  const mine = m.from === me.uid, box = $('sbox'); box.innerHTML = '';
-  const add = (label, fn, cls) => { const b = document.createElement('button'); b.textContent = label; if (cls) b.className = cls; b.onclick = () => { $('sheet').classList.remove('on'); fn(); }; box.appendChild(b); };
-  add('↩ رد', () => { edt = null; rep = { id, text: m.text.slice(0, 80), name: mine ? (me.name || me.username) : cur.name }; setBar('r', 'رد على ' + rep.name, rep.text); $('txt').focus(); });
-  add('⧉ نسخ', () => { navigator.clipboard && navigator.clipboard.writeText(m.text).then(() => toast('تم النسخ'), () => {}); });
+  const mine = m.from === me.uid;
+  const it = [
+    { l: '↩ رد', f: () => { edt = null; rep = { id, text: m.text.slice(0, 80), name: mine ? (me.name || me.username) : cur.name }; setBar('r', 'رد على ' + rep.name, rep.text); $('txt').focus(); } },
+    { l: '⧉ نسخ', f: () => { navigator.clipboard && navigator.clipboard.writeText(m.text).then(() => toast('تم النسخ'), () => {}); } }
+  ];
   if (mine) {
-    add('✎ تعديل', () => { rep = null; edt = id; $('txt').value = m.text; setBar('e', 'تعديل الرسالة', m.text.slice(0, 80)); $('txt').focus(); });
-    add('🗑 حذف', async () => { try { await db.doc('chats/' + cur.id + '/messages/' + id).delete(); } catch (e) { toast('تعذّر الحذف'); } }, 'del');
+    it.push({ l: '✎ تعديل', f: () => { rep = null; edt = id; $('txt').value = m.text; setBar('e', 'تعديل الرسالة', m.text.slice(0, 80)); $('txt').focus(); } });
+    it.push({ l: '🗑 حذف', c: 'del', f: async () => { try { await db.doc('chats/' + cur.id + '/messages/' + id).delete(); } catch (e) { toast('تعذّر الحذف'); } } });
   }
-  add('إلغاء', () => {});
-  $('sheet').classList.add('on');
+  sheet(it);
 }
-$('sheet').onclick = e => { if (e.target.id === 'sheet') $('sheet').classList.remove('on'); };
+
+/* chat header: menu, info */
+$('cmenu').onclick = () => {
+  const id = cur.uid, P = me.prefs;
+  sheet([
+    { l: P.muted.includes(id) ? '🔔 إلغاء كتم الإشعارات' : '🔕 كتم الإشعارات', f: () => togg('muted', id) },
+    { l: P.blocked.includes(id) ? '✅ إلغاء الحظر' : '🚫 حظر المستخدم', f: () => togg('blocked', id) },
+    { l: '🗑 مسح سجل الدردشة', c: 'del', f: clearChat }
+  ]);
+};
+async function clearChat() {
+  if (!confirm('مسح كل رسائل هذي الدردشة؟ راح تنمسح عندك وعند الطرف الثاني.')) return;
+  try {
+    const s = await db.collection('chats/' + cur.id + '/messages').get();
+    for (let i = 0; i < s.docs.length; i += 400) {
+      const b = db.batch(); s.docs.slice(i, i + 400).forEach(d => b.delete(d.ref)); await b.commit();
+    }
+    await db.doc('chats/' + cur.id).update({ lastMessage: '' });
+    toast('تم مسح الدردشة');
+  } catch (e) { toast('تعذّر المسح'); }
+}
+function fillInfo(u) {
+  avatar($('iav'), cur.name, u.photo);
+  $('iname').textContent = cur.name;
+  $('iedit').value = me.prefs.contacts[cur.uid] || '';
+  $('iedit').placeholder = u.name || u.username || '';
+  $('ior').textContent = u.name || u.username || '—';
+  $('ipid').textContent = u.pid || '—';
+  $('iun').textContent = '@' + (u.username || '');
+}
+$('ctitle').onclick = $('cav').onclick = async () => { const u = await getU(cur.uid); fillInfo(u); show('info'); };
+$('iback').onclick = () => show('chat');
+$('isave').onclick = async () => {
+  const v = $('iedit').value.trim(), id = cur.uid;
+  try {
+    await db.doc('prefs/' + me.uid).set({ contacts: { [id]: v ? v : FV.delete() } }, { merge: true });
+    if (v) me.prefs.contacts[id] = v; else delete me.prefs.contacts[id];
+    const u = await getU(id); cur.name = dn(id, u); $('ctitle').textContent = cur.name;
+    fillInfo(u); toast('تم حفظ الاسم');
+  } catch (e) { toast('تعذّر الحفظ'); }
+};
 
 function openChat(uid, name) {
   cur = { id: [me.uid, uid].sort().join('_'), uid, name };
   clearBar(); $('txt').value = '';
   $('ctitle').textContent = name; avatar($('cav'), name);
   getU(uid).then(u => {
-    if (cur && cur.uid === uid) { cur.name = u.name || u.username || name; $('ctitle').textContent = cur.name; avatar($('cav'), cur.name, u.photo); }
+    if (cur && cur.uid === uid) { cur.name = dn(uid, u); $('ctitle').textContent = cur.name; avatar($('cav'), cur.name, u.photo); }
   });
   $('msgs').innerHTML = ''; show('chat');
   unMsgs && unMsgs();
@@ -433,6 +607,7 @@ $('back').onclick = () => { unMsgs && unMsgs(); unMsgs = null; $('msgs').dataset
 async function send() {
   const text = $('txt').value.trim();
   if (!text || !cur) return;
+  if (me.prefs.blocked.includes(cur.uid)) return toast('هذا المستخدم محظور، ألغِ الحظر أولاً');
   $('txt').value = '';
   try {
     if (edt) {
@@ -446,13 +621,103 @@ async function send() {
     await db.doc('chats/' + cur.id).set({
       members: [me.uid, cur.uid],
       names: { [me.uid]: me.name || me.username, [cur.uid]: cur.name },
-      lastMessage: text, updatedAt: TS()
+      lastMessage: text, lastFrom: me.uid, updatedAt: TS()
     }, { merge: true });
     await db.collection('chats/' + cur.id + '/messages').add(msg);
   } catch (e) { toast('تعذّر الإرسال'); }
 }
 $('snd').onclick = send;
 $('txt').onkeydown = e => { if (e.key === 'Enter') send(); };
+
+/* voice calls (WebRTC, signaling through Firestore) */
+const ICE = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
+function callUI(name, photo, status, mode) {
+  $('call').classList.add('on');
+  avatar($('cvav'), name, photo); $('cvn').textContent = name; $('cvs').textContent = status;
+  $('cacc').style.display = mode === 'in' ? '' : 'none';
+  $('cmute').style.display = mode === 'in' ? 'none' : '';
+  $('cmute').textContent = '🎙';
+}
+function mkPc(role) {
+  const pc = new RTCPeerConnection(ICE); call.pc = pc;
+  call.stream.getTracks().forEach(t => pc.addTrack(t, call.stream));
+  pc.ontrack = e => { $('rem').srcObject = e.streams[0]; $('rem').play().catch(() => {}); };
+  const mine = role === 'caller' ? 'callerCandidates' : 'calleeCandidates';
+  pc.onicecandidate = e => { if (e.candidate && call) db.collection('calls/' + call.id + '/' + mine).add(e.candidate.toJSON()).catch(() => {}); };
+  pc.onconnectionstatechange = () => {
+    if (pc.connectionState === 'connected') liveStart();
+    if (pc.connectionState === 'failed') { toast('انقطع الاتصال'); endCall(); }
+  };
+  return pc;
+}
+function listenCand(role) {
+  const theirs = role === 'caller' ? 'calleeCandidates' : 'callerCandidates', pc = call.pc;
+  call.unsubs.push(db.collection('calls/' + call.id + '/' + theirs).onSnapshot(s => s.docChanges().forEach(c => {
+    if (c.type === 'added') pc.addIceCandidate(new RTCIceCandidate(c.doc.data())).catch(() => {});
+  })));
+}
+function liveStart() {
+  if (!call || call.live) return;
+  call.live = true; clearTimeout(call.to_);
+  const t0 = Date.now();
+  call.tm = setInterval(() => { const s = Math.floor((Date.now() - t0) / 1000); $('cvs').textContent = 'متصل ' + String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }, 1000);
+}
+async function startCall() {
+  if (call || !cur) return;
+  if (me.prefs.blocked.includes(cur.uid)) return toast('هذا المستخدم محظور');
+  if (!navigator.mediaDevices || !window.RTCPeerConnection) return toast('المتصفح ما يدعم المكالمات');
+  const u = await getU(cur.uid);
+  call = { role: 'caller', unsubs: [], uid: cur.uid };
+  callUI(cur.name, u.photo, 'جاري الاتصال...', 'out');
+  try { call.stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch (e) { call = null; $('call').classList.remove('on'); return toast('لازم تسمح للمايك'); }
+  try {
+    const ref = db.collection('calls').doc(); call.id = ref.id;
+    const pc = mkPc('caller'), offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    await ref.set({ from: me.uid, to: cur.uid, status: 'ringing', offer: { type: offer.type, sdp: offer.sdp }, createdAt: TS() });
+    call.unsubs.push(ref.onSnapshot(async d => {
+      const x = d.data();
+      if (!x || !call) return;
+      if (x.answer && !call.got) { call.got = true; await pc.setRemoteDescription(x.answer); listenCand('caller'); $('cvs').textContent = 'جاري الاتصال...'; }
+      if (x.status === 'declined') { toast('رفض المكالمة'); endCall(true); }
+      if (x.status === 'ended') endCall(true);
+    }));
+    $('cvs').textContent = 'يرن...';
+    call.to_ = setTimeout(() => { if (call && !call.live) { toast('ما رد'); endCall(); } }, 45000);
+  } catch (e) { toast('تعذّر بدء المكالمة'); endCall(true); }
+}
+async function acceptCall() {
+  if (!call || call.role !== 'callee') return;
+  const id = call.id;
+  try { call.stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch (e) { toast('لازم تسمح للمايك'); endCall(); return; }
+  try {
+    const pc = mkPc('callee');
+    await pc.setRemoteDescription(call.offer); listenCand('callee');
+    const ans = await pc.createAnswer(); await pc.setLocalDescription(ans);
+    await db.doc('calls/' + id).update({ answer: { type: ans.type, sdp: ans.sdp }, status: 'active' });
+    $('cacc').style.display = 'none'; $('cmute').style.display = ''; $('cvs').textContent = 'جاري الاتصال...';
+  } catch (e) { toast('تعذّر الرد'); endCall(); }
+}
+function endCall(remote) {
+  if (!call) return;
+  const c = call; call = null;
+  clearTimeout(c.to_); clearInterval(c.tm);
+  c.unsubs.forEach(f => f());
+  c.stream && c.stream.getTracks().forEach(t => t.stop());
+  c.pc && c.pc.close();
+  $('rem').srcObject = null; $('call').classList.remove('on');
+  if (!remote && c.id) db.doc('calls/' + c.id).update({ status: c.role === 'callee' && !c.pc ? 'declined' : 'ended' }).catch(() => {});
+}
+$('ccall').onclick = startCall;
+$('cacc').onclick = acceptCall;
+$('cend').onclick = () => endCall();
+$('cmute').onclick = () => {
+  if (!call || !call.stream) return;
+  const t = call.stream.getAudioTracks()[0]; t.enabled = !t.enabled;
+  $('cmute').textContent = t.enabled ? '🎙' : '🔇';
+};
 </script>
 </body>
 </html>
