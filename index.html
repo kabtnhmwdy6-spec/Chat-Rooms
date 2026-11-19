@@ -3,7 +3,8 @@
 <head>
 <meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1, viewport-fit=cover'>
-<title>Chat Rooms</title>
+<title>Chat Teleiraq</title>
+<link href='https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&display=swap' rel='stylesheet'>
 <style>
 :root{--acc:#3390ec;--bg:#fff;--hd:#fff;--chat:#d9e4ee;--mine:#eeffde;--other:#fff;--text:#0f1419;--muted:#7a8590;--line:#e6e9ed;--tick:#4fae4e;--sheet:#fff}
 :root[data-t=dark]{--acc:#6ab3f3;--bg:#17212b;--hd:#17212b;--chat:#0e1621;--mine:#2b5278;--other:#182533;--text:#f5f5f5;--muted:#7f91a4;--line:#0e1621;--tick:#7fd47d;--sheet:#1f2c3a}
@@ -18,12 +19,23 @@ input:focus{border-color:var(--acc)}
 .link{color:var(--acc);padding:10px;font-weight:600}
 .err{color:#e5484d;font-size:.9rem;min-height:1.2em;text-align:center}
 .err.ok{color:var(--tick)}
-.flag{background:linear-gradient(#ce1126 33.4%,#fff 33.4% 66.6%,#000 66.6%);display:flex;align-items:center;justify-content:center;border:1px solid var(--line);width:168px;height:112px;margin:0 auto;border-radius:6px}
-.flag b{color:#007a3d;font-size:1.5rem}
-#auth{justify-content:center;padding:24px;gap:14px;padding-top:calc(24px + env(safe-area-inset-top))}
-#auth h1{text-align:center;font-size:2rem;direction:ltr}
-#auth p.sub{text-align:center;color:var(--muted);margin-top:-8px}
-#auth input{direction:ltr;text-align:left}
+#auth{position:relative;overflow:hidden;justify-content:center;padding:24px;padding-top:calc(24px + env(safe-area-inset-top));background:#0b1322;color:#fff}
+.bgf{position:absolute;left:50%;top:18%;width:130%;aspect-ratio:3/2;transform:translateX(-50%);background:linear-gradient(#ce1126 33.4%,#fff 33.4% 66.6%,#000 66.6%);filter:blur(8px);opacity:.3;display:flex;align-items:center;justify-content:center}
+.bgf b{color:#007a3d;font-size:4rem}
+.bgo{position:absolute;inset:0;background:linear-gradient(rgba(8,14,28,.55),rgba(8,14,28,.92))}
+.zig{position:absolute;left:-30px;bottom:0;width:160px;height:180px;background:linear-gradient(#d9b77a,#a9773b);clip-path:polygon(0 100%,0 62%,14% 62%,14% 44%,30% 44%,30% 28%,48% 28%,48% 14%,66% 14%,66% 28%,84% 28%,84% 62%,100% 62%,100% 100%);opacity:.3}
+.gate{position:absolute;right:-20px;bottom:0;width:150px;height:160px;background:linear-gradient(#2a5db0,#173a78);border-radius:75px 75px 0 0;opacity:.3}
+.ac{position:relative;z-index:1;display:flex;flex-direction:column;gap:12px;width:100%}
+.flag{width:92px;height:62px;margin:0 auto;border-radius:4px;background:linear-gradient(#ce1126 33.4%,#fff 33.4% 66.6%,#000 66.6%);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.5)}
+.flag b{color:#007a3d;font-size:.55rem}
+.dev{text-align:center;color:#e9eef7;font-size:.95rem}
+.ac h1{font-family:'Cinzel Decorative',Georgia,serif;font-size:2.7rem;line-height:1.05;text-align:center;direction:ltr;background:linear-gradient(#f3e3b8,#c9a15a);-webkit-background-clip:text;background-clip:text;color:transparent;margin:6px 0 14px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}
+.ac input{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;direction:rtl;text-align:right;border-radius:14px;padding:15px 16px;backdrop-filter:blur(6px)}
+.ac input::placeholder{color:rgba(255,255,255,.65)}
+.ac input:focus{border-color:#d9b77a}
+.ac .btn{background:linear-gradient(#4a8ae0,#2f6bc4);border-radius:30px;padding:15px;font-size:1.15rem;box-shadow:0 6px 18px rgba(47,107,196,.4)}
+.lk{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.ac .link{color:#fff;font-weight:500;font-size:.9rem;padding:6px 2px;text-align:start}
 .top{display:flex;align-items:center;gap:10px;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top));background:var(--hd);border-bottom:1px solid var(--line)}
 .top h2{flex:1;font-size:1.1rem;direction:ltr;text-align:right}
 .top.ct{direction:ltr}
@@ -105,21 +117,27 @@ input:focus{border-color:var(--acc)}
 <body>
 
 <div id='auth' class='screen'>
-  <div class='flag'><b>الله أكبر</b></div>
-  <h1>Chat Rooms</h1>
-  <p class='sub' id='sub'>سجّل دخولك للتواصل</p>
-  <input id='uname' placeholder='username (a-z, 0-9, _)' autocapitalize='none' style='display:none'>
-  <input id='email' type='email' placeholder='Email'>
-  <input id='pass' type='password' placeholder='Password'>
-  <div class='err' id='aerr'></div>
-  <button class='btn' id='go'>دخول</button>
-  <button class='link' id='resend' style='display:none'>إعادة إرسال رابط التأكيد</button>
-  <button class='link' id='swap'>ما عندك حساب؟ أنشئ حساب جديد</button>
+  <div class='bgf'><b>الله أكبر</b></div><div class='bgo'></div><div class='zig'></div><div class='gate'></div>
+  <div class='ac'>
+    <div class='flag'><b>الله أكبر</b></div>
+    <p class='dev'>المطور: Mohammed Jomah</p>
+    <h1>Chat<br>Teleiraq</h1>
+    <input id='uname' placeholder='اكتب اليوزر نيم الخاص بك' autocapitalize='none' style='display:none'>
+    <input id='email' type='email' placeholder='البريد الإلكتروني'>
+    <input id='pass' type='password' placeholder='كلمة السر'>
+    <div class='err' id='aerr'></div>
+    <button class='btn' id='go'>تسجيل الدخول</button>
+    <div class='lk'>
+      <button class='link' id='forgot'>هل نسيت كلمة المرور؟</button>
+      <button class='link' id='swap'>ماعندك حساب؟ اضغط لإنشاء حساب...</button>
+    </div>
+    <button class='link' id='resend' style='display:none'>إعادة إرسال رابط التأكيد</button>
+  </div>
 </div>
 
 <div id='list' class='screen'>
   <div class='top'>
-    <h2>Chat Rooms</h2>
+    <h2>Chat Teleiraq</h2>
     <span class='me' id='me'></span>
     <button class='ic' id='theme'>☾</button>
     <button class='ic' id='out'>⎋</button>
@@ -271,12 +289,21 @@ $('sheet').onclick = e => { if (e.target.id === 'sheet') $('sheet').classList.re
 function setMode(v) {
   signup = v;
   $('uname').style.display = signup ? '' : 'none';
-  $('go').textContent = signup ? 'إنشاء حساب' : 'دخول';
-  $('sub').textContent = signup ? 'اختر يوزرنيم ليجدك الناس به' : 'سجّل دخولك للتواصل';
-  $('swap').textContent = signup ? 'عندي حساب؟ سجّل دخول' : 'ما عندك حساب؟ أنشئ حساب جديد';
+  $('email').placeholder = signup ? 'اكتب البريد الإلكتروني' : 'البريد الإلكتروني';
+  $('pass').placeholder = signup ? 'اكتب كلمة سر' : 'كلمة السر';
+  $('go').textContent = signup ? 'إنشاء حساب' : 'تسجيل الدخول';
+  $('forgot').style.display = signup ? 'none' : '';
+  $('swap').parentNode.style.justifyContent = signup ? 'center' : 'space-between';
+  $('swap').textContent = signup ? 'عندك حساب؟ اضغط لتسجيل الدخول' : 'ماعندك حساب؟ اضغط لإنشاء حساب...';
   aerr();
 }
 $('swap').onclick = () => setMode(!signup);
+$('forgot').onclick = async () => {
+  const email = $('email').value.trim();
+  if (!email) return aerr('اكتب بريدك أولاً ثم اضغط «هل نسيت كلمة المرور؟»');
+  try { await auth.sendPasswordResetEmail(email); aerr('تم إرسال رابط تغيير كلمة المرور إلى ' + email + ' (شيّك مجلد Spam)', true); }
+  catch (e) { aerr(e.code === 'auth/invalid-email' ? ERR[e.code] : 'تعذّر الإرسال، جرّب لاحقًا'); }
+};
 
 const NOTVER = 'الايميل غير مؤكَّد. افتح رابط التأكيد المرسل لإيميلك (شيّك مجلد Spam) ثم سجّل دخول.';
 $('resend').onclick = async () => {
