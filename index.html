@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang='ar' dir='rtl'>
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1, viewport-fit=cover'>
 <title>Chat Rooms</title>
 <style>
 :root{--acc:#3390ec;--bg:#fff;--hd:#fff;--chat:#d9e4ee;--mine:#eeffde;--other:#fff;--text:#0f1419;--muted:#7a8590;--line:#e6e9ed;--tick:#4fae4e;--sheet:#fff}
 :root[data-t=dark]{--acc:#6ab3f3;--bg:#17212b;--hd:#17212b;--chat:#0e1621;--mine:#2b5278;--other:#182533;--text:#f5f5f5;--muted:#7f91a4;--line:#0e1621;--tick:#7fd47d;--sheet:#1f2c3a}
-*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,Tahoma,sans-serif}
 html,body{height:100%;background:var(--bg);color:var(--text);overscroll-behavior:none}
 .screen{display:none;flex-direction:column;height:100dvh;max-width:560px;margin:0 auto;background:var(--bg)}
 .screen.on{display:flex}
@@ -34,19 +34,35 @@ input:focus{border-color:var(--acc)}
 #chats{flex:1;overflow-y:auto}
 .row{display:flex;align-items:center;gap:12px;padding:10px 14px;cursor:pointer}
 .row:active{background:var(--chat)}
-.av{width:52px;height:52px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;flex:none;text-transform:uppercase}
+.av{width:52px;height:52px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;flex:none;text-transform:uppercase;background-size:cover;background-position:center}
 .row .t{flex:1;min-width:0;border-bottom:1px solid var(--line);padding-bottom:10px}
 .row .h{display:flex;justify-content:space-between;gap:8px}
-.row .n{font-weight:700;direction:ltr}
+.row .n{font-weight:700}
 .row .d{color:var(--muted);font-size:.78rem}
 .row .l{color:var(--muted);font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
 .empty{padding:48px 24px;text-align:center;color:var(--muted);line-height:1.9}
+#prof{display:none;flex:1;overflow-y:auto;padding:28px 20px;flex-direction:column;align-items:center;gap:16px}
+#list[data-v=p] #prof{display:flex}
+#list[data-v=p] .search,#list[data-v=p] #chats{display:none}
+.pav{position:relative;width:112px;height:112px}
+.pav .av{width:112px;height:112px;font-size:2.8rem}
+.pav label{position:absolute;bottom:0;inset-inline-end:0;background:var(--acc);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:3px solid var(--bg)}
+.nm{display:flex;gap:8px;width:100%}
+.nm button{background:var(--acc);color:#fff;border-radius:12px;padding:0 18px;font-weight:700}
+.info{width:100%;border-top:1px solid var(--line)}
+.info div{display:flex;justify-content:space-between;align-items:center;padding:15px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+.info small{color:var(--muted);font-size:.85rem}
+.info b{direction:ltr;letter-spacing:1px}
+.nav{display:flex;border-top:1px solid var(--line);background:var(--hd);padding-bottom:env(safe-area-inset-bottom)}
+.nav button{flex:1;padding:8px 0 6px;color:var(--muted);font-size:.75rem;display:flex;flex-direction:column;align-items:center;gap:2px}
+.nav button span{font-size:1.35rem}
+.nav button.on{color:var(--acc);font-weight:700}
 #chat .back{font-size:1.5rem;color:var(--acc);padding:0 4px}
 #msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:4px;background:var(--chat)}
 .m{max-width:80%;padding:6px 10px 4px;border-radius:14px;background:var(--other);align-self:flex-end;overflow-wrap:anywhere;line-height:1.5;border-bottom-left-radius:4px;box-shadow:0 1px 1px rgba(0,0,0,.08);cursor:pointer}
 .m.mine{align-self:flex-start;background:var(--mine);border-bottom-left-radius:14px;border-bottom-right-radius:4px}
 .q{border-inline-start:3px solid var(--acc);padding:1px 8px;margin-bottom:4px;font-size:.85rem;background:rgba(51,144,236,.1);border-radius:4px}
-.q b{display:block;color:var(--acc);direction:ltr;text-align:right}
+.q b{display:block;color:var(--acc)}
 .q span{display:block;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .m small{display:block;font-size:.7rem;color:var(--muted);text-align:left;direction:ltr;margin-top:1px}
 .m small i{font-style:normal;margin-inline-start:3px}
@@ -69,61 +85,73 @@ input:focus{border-color:var(--acc)}
 </head>
 <body>
 
-<div id="auth" class="screen">
-  <div class="flag"><b>الله أكبر</b></div>
+<div id='auth' class='screen'>
+  <div class='flag'><b>الله أكبر</b></div>
   <h1>Chat Rooms</h1>
-  <p class="sub" id="sub">سجّل دخولك للتواصل</p>
-  <input id="uname" placeholder="username (a-z, 0-9, _)" autocapitalize="none" style="display:none">
-  <input id="email" type="email" placeholder="Email">
-  <input id="pass" type="password" placeholder="Password">
-  <div class="err" id="aerr"></div>
-  <button class="btn" id="go">دخول</button>
-  <button class="link" id="resend" style="display:none">إعادة إرسال رابط التأكيد</button>
-  <button class="link" id="swap">ما عندك حساب؟ أنشئ حساب جديد</button>
+  <p class='sub' id='sub'>سجّل دخولك للتواصل</p>
+  <input id='uname' placeholder='username (a-z, 0-9, _)' autocapitalize='none' style='display:none'>
+  <input id='email' type='email' placeholder='Email'>
+  <input id='pass' type='password' placeholder='Password'>
+  <div class='err' id='aerr'></div>
+  <button class='btn' id='go'>دخول</button>
+  <button class='link' id='resend' style='display:none'>إعادة إرسال رابط التأكيد</button>
+  <button class='link' id='swap'>ما عندك حساب؟ أنشئ حساب جديد</button>
 </div>
 
-<div id="list" class="screen">
-  <div class="top">
+<div id='list' class='screen'>
+  <div class='top'>
     <h2>Chat Rooms</h2>
-    <span class="me" id="me"></span>
-    <button class="ic" id="theme" title="الثيم">☾</button>
-    <button class="ic" id="out" title="خروج">⎋</button>
+    <span class='me' id='me'></span>
+    <button class='ic' id='theme'>☾</button>
+    <button class='ic' id='out'>⎋</button>
   </div>
-  <div class="search">
-    <input id="q" placeholder="@username" autocapitalize="none">
-    <button id="find">ابحث</button>
+  <div class='search'>
+    <input id='q' placeholder='@username أو ID من 6 أرقام' autocapitalize='none'>
+    <button id='find'>ابحث</button>
   </div>
-  <div id="chats"></div>
-</div>
-
-<div id="chat" class="screen">
-  <div class="top">
-    <button class="back" id="back">→</button>
-    <div class="av" id="cav" style="width:40px;height:40px;font-size:1rem"></div>
-    <h2 id="ctitle"></h2>
+  <div id='chats'></div>
+  <div id='prof'>
+    <div class='pav'><div class='av' id='pav'></div><label for='pfile'>📷</label><input id='pfile' type='file' accept='image/*' style='display:none'></div>
+    <div class='nm'><input id='pname' maxlength='30' placeholder='اسمك'><button id='psave'>حفظ</button></div>
+    <div class='info'>
+      <div id='cpun'><small>اليوزرنيم</small><b id='pun'></b></div>
+      <div id='cpid'><small>الايدي (اضغط للنسخ)</small><b id='ppid'>...</b></div>
+    </div>
   </div>
-  <div id="msgs"></div>
-  <div id="bar"><div><b id="bt"></b><span id="bs"></span></div><button class="ic" id="bx">✕</button></div>
-  <div class="send">
-    <input id="txt" placeholder="اكتب رسالة...">
-    <button id="snd">➤</button>
+  <div class='nav'>
+    <button id='t1' class='on'><span>💬</span>المحادثات</button>
+    <button id='t2'><span>👤</span>الملف الشخصي</button>
   </div>
 </div>
 
-<div id="sheet"><div id="sbox"></div></div>
-<div class="toast" id="toast"></div>
+<div id='chat' class='screen'>
+  <div class='top'>
+    <button class='back' id='back'>→</button>
+    <div class='av' id='cav' style='width:40px;height:40px;font-size:1rem'></div>
+    <h2 id='ctitle'></h2>
+  </div>
+  <div id='msgs'></div>
+  <div id='bar'><div><b id='bt'></b><span id='bs'></span></div><button class='ic' id='bx'>✕</button></div>
+  <div class='send'>
+    <input id='txt' placeholder='اكتب رسالة...'>
+    <button id='snd'>➤</button>
+  </div>
+</div>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<div id='sheet'><div id='sbox'></div></div>
+<div class='toast' id='toast'></div>
+
+<script src='https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js'></script>
+<script src='https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js'></script>
+<script src='https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js'></script>
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyDgSJbOY4MW0Ge9Qg0emCHlD0PmGl1IDuI",
-  authDomain: "chat-rooms-427da.firebaseapp.com",
-  projectId: "chat-rooms-427da",
-  storageBucket: "chat-rooms-427da.firebasestorage.app",
-  messagingSenderId: "443493401556",
-  appId: "1:443493401556:web:902a85be1e9498df45cc41"
+  apiKey: 'AIzaSyDgSJbOY4MW0Ge9Qg0emCHlD0PmGl1IDuI',
+  authDomain: 'chat-rooms-427da.firebaseapp.com',
+  projectId: 'chat-rooms-427da',
+  storageBucket: 'chat-rooms-427da.firebasestorage.app',
+  messagingSenderId: '443493401556',
+  appId: '1:443493401556:web:902a85be1e9498df45cc41'
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth(), db = firebase.firestore(), TS = firebase.firestore.FieldValue.serverTimestamp;
@@ -138,7 +166,10 @@ $('theme').onclick = () => setTheme(document.documentElement.dataset.t === 'dark
 
 const COLS = ['#e17076', '#7bc862', '#e5ca77', '#65aadd', '#a695e7', '#ee7aae', '#6ec9cb', '#faa774'];
 const col = n => COLS[[...n].reduce((a, c) => a + c.charCodeAt(0), 0) % COLS.length];
-const avatar = (el, n) => { el.textContent = n[0] || '?'; el.style.background = col(n); };
+const avatar = (el, n, photo) => {
+  if (photo) { el.textContent = ''; el.style.background = 'url(' + photo + ') center/cover'; }
+  else { el.textContent = n[0] || '?'; el.style.background = col(n); }
+};
 const hm = ts => ts ? ts.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
 const show = n => ['auth', 'list', 'chat'].forEach(s => $(s).classList.toggle('on', s === n));
@@ -154,6 +185,15 @@ const ERR = {
   'auth/too-many-requests': 'محاولات كثيرة، انتظر قليلًا ثم جرّب'
 };
 const aerr = (t, ok) => { $('aerr').textContent = t || ''; $('aerr').classList.toggle('ok', !!ok); $('resend').style.display = 'none'; };
+
+/* users cache */
+const uc = {};
+async function getU(uid) {
+  const c = uc[uid];
+  if (c && Date.now() - c.t < 20000) return c.d;
+  try { const d = await db.doc('users/' + uid).get(); const x = d.exists ? d.data() : {}; uc[uid] = { t: Date.now(), d: x }; return x; }
+  catch (e) { return {}; }
+}
 
 function setMode(v) {
   signup = v;
@@ -218,18 +258,73 @@ $('go').onclick = async () => {
 
 auth.onAuthStateChanged(u => { if (busy) return; if (u && !u.emailVerified) { auth.signOut(); return; } u ? enter(u) : (cleanup(), show('auth')); });
 
+/* tabs + profile */
+function tab(v) {
+  $('list').dataset.v = v;
+  $('t1').classList.toggle('on', v !== 'p'); $('t2').classList.toggle('on', v === 'p');
+}
+$('t1').onclick = () => tab('c');
+$('t2').onclick = () => { renderProf(); tab('p'); };
+function renderProf() {
+  if (!me) return;
+  avatar($('pav'), me.name || me.username, me.photo);
+  $('pname').value = me.name || me.username;
+  $('pun').textContent = '@' + me.username;
+  $('ppid').textContent = me.pid || '...';
+}
+async function ensurePid() {
+  if (me.pid) return;
+  for (let i = 0; i < 8; i++) {
+    const p = String(Math.floor(100000 + Math.random() * 900000));
+    try {
+      await db.runTransaction(async t => {
+        const r = db.doc('pids/' + p);
+        if ((await t.get(r)).exists) throw new Error('used');
+        t.set(r, { uid: me.uid });
+        t.update(db.doc('users/' + me.uid), { pid: p });
+      });
+      me.pid = p; return;
+    } catch (e) { if (e.message !== 'used') return; }
+  }
+}
+$('psave').onclick = async () => {
+  const n = $('pname').value.trim();
+  if (!n || n.length > 30) return toast('الاسم من 1 إلى 30 حرف');
+  try { await db.doc('users/' + me.uid).update({ name: n }); me.name = n; uc[me.uid] = null; renderProf(); toast('تم حفظ الاسم'); }
+  catch (e) { toast('تعذّر حفظ الاسم'); }
+};
+$('pfile').onchange = e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  const img = new Image(), url = URL.createObjectURL(f);
+  img.onload = async () => {
+    const s = Math.min(img.width, img.height), c = document.createElement('canvas');
+    c.width = c.height = 160;
+    c.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 160, 160);
+    URL.revokeObjectURL(url);
+    const photo = c.toDataURL('image/jpeg', 0.8);
+    try { await db.doc('users/' + me.uid).update({ photo }); me.photo = photo; uc[me.uid] = null; renderProf(); toast('تم تحديث الصورة'); }
+    catch (er) { toast('تعذّر حفظ الصورة'); }
+  };
+  img.onerror = () => toast('هذا الملف ليس صورة');
+  img.src = url;
+};
+$('cpid').onclick = () => { if (me && me.pid && navigator.clipboard) navigator.clipboard.writeText(me.pid).then(() => toast('تم نسخ الايدي'), () => {}); };
+
 async function enter(u) {
   unList && unList(); unMsgs && unMsgs(); unList = unMsgs = null;
   const d = await db.doc('users/' + u.uid).get();
   if (!d.exists) { await auth.signOut(); return; }
-  me = { uid: u.uid, username: d.data().username };
+  const x = d.data();
+  me = { uid: u.uid, username: x.username, name: x.name, photo: x.photo, pid: x.pid };
   $('me').textContent = '@' + me.username;
-  show('list');
+  tab('c'); renderProf(); show('list');
+  ensurePid().then(renderProf);
   unList = db.collection('chats').where('members', 'array-contains', me.uid).onSnapshot(s => {
     const rows = s.docs.map(x => ({ id: x.id, ...x.data() }))
       .sort((a, b) => ((b.updatedAt && b.updatedAt.toMillis()) || 9e15) - ((a.updatedAt && a.updatedAt.toMillis()) || 9e15));
     const box = $('chats'); box.innerHTML = '';
-    if (!rows.length) { box.innerHTML = '<div class="empty">ما عندك محادثات بعد.<br>ابحث عن صديقك باليوزرنيم بالأعلى وابدأ الدردشة.</div>'; return; }
+    if (!rows.length) { box.innerHTML = '<div class="empty">ما عندك محادثات بعد.<br>ابحث عن صديقك باليوزرنيم أو الايدي بالأعلى وابدأ الدردشة.</div>'; return; }
     rows.forEach(r => {
       const other = r.members.find(x => x !== me.uid), name = (r.names && r.names[other]) || '?';
       const el = document.createElement('div'); el.className = 'row';
@@ -240,6 +335,12 @@ async function enter(u) {
       el.querySelector('.l').textContent = r.lastMessage || '';
       el.onclick = () => openChat(other, name);
       box.appendChild(el);
+      getU(other).then(u2 => {
+        const nm = u2.name || u2.username || name;
+        el.querySelector('.n').textContent = nm;
+        avatar(el.querySelector('.av'), nm, u2.photo);
+        el.onclick = () => openChat(other, nm);
+      });
     });
   });
 }
@@ -248,13 +349,23 @@ function cleanup() { unList && unList(); unMsgs && unMsgs(); unList = unMsgs = n
 $('out').onclick = () => auth.signOut();
 
 async function find() {
-  const name = $('q').value.trim().replace(/^@/, '').toLowerCase();
-  if (!name) return;
-  if (name === me.username) return toast('هذا حسابك أنت');
+  const raw = $('q').value.trim().replace(/^@/, '').toLowerCase();
+  if (!raw) return;
   try {
-    const d = await db.doc('usernames/' + name).get();
-    if (!d.exists) return toast('ما لقينا مستخدم بهذا اليوزرنيم');
-    $('q').value = ''; openChat(d.data().uid, name);
+    let uid, name;
+    if (/^[0-9]{6}$/.test(raw)) {
+      const d = await db.doc('pids/' + raw).get();
+      if (!d.exists) return toast('ما لقينا مستخدم بهذا الايدي');
+      uid = d.data().uid;
+      if (uid === me.uid) return toast('هذا حسابك أنت');
+      const u = await getU(uid); name = u.name || u.username || '?';
+    } else {
+      if (raw === me.username) return toast('هذا حسابك أنت');
+      const d = await db.doc('usernames/' + raw).get();
+      if (!d.exists) return toast('ما لقينا مستخدم بهذا اليوزرنيم');
+      uid = d.data().uid; name = raw;
+    }
+    $('q').value = ''; openChat(uid, name);
   } catch (e) { toast('تعذّر البحث، تأكد من الانترنت'); }
 }
 $('find').onclick = find;
@@ -272,7 +383,7 @@ $('bx').onclick = () => { if (edt) $('txt').value = ''; clearBar(); };
 function menu(id, m) {
   const mine = m.from === me.uid, box = $('sbox'); box.innerHTML = '';
   const add = (label, fn, cls) => { const b = document.createElement('button'); b.textContent = label; if (cls) b.className = cls; b.onclick = () => { $('sheet').classList.remove('on'); fn(); }; box.appendChild(b); };
-  add('↩ رد', () => { edt = null; rep = { id, text: m.text.slice(0, 80), name: m.from === me.uid ? me.username : cur.name }; setBar('r', 'رد على ' + rep.name, rep.text); $('txt').focus(); });
+  add('↩ رد', () => { edt = null; rep = { id, text: m.text.slice(0, 80), name: mine ? (me.name || me.username) : cur.name }; setBar('r', 'رد على ' + rep.name, rep.text); $('txt').focus(); });
   add('⧉ نسخ', () => { navigator.clipboard && navigator.clipboard.writeText(m.text).then(() => toast('تم النسخ'), () => {}); });
   if (mine) {
     add('✎ تعديل', () => { rep = null; edt = id; $('txt').value = m.text; setBar('e', 'تعديل الرسالة', m.text.slice(0, 80)); $('txt').focus(); });
@@ -287,6 +398,9 @@ function openChat(uid, name) {
   cur = { id: [me.uid, uid].sort().join('_'), uid, name };
   clearBar(); $('txt').value = '';
   $('ctitle').textContent = name; avatar($('cav'), name);
+  getU(uid).then(u => {
+    if (cur && cur.uid === uid) { cur.name = u.name || u.username || name; $('ctitle').textContent = cur.name; avatar($('cav'), cur.name, u.photo); }
+  });
   $('msgs').innerHTML = ''; show('chat');
   unMsgs && unMsgs();
   unMsgs = db.collection('chats/' + cur.id + '/messages').orderBy('createdAt').onSnapshot(s => {
@@ -331,7 +445,7 @@ async function send() {
     clearBar();
     await db.doc('chats/' + cur.id).set({
       members: [me.uid, cur.uid],
-      names: { [me.uid]: me.username, [cur.uid]: cur.name },
+      names: { [me.uid]: me.name || me.username, [cur.uid]: cur.name },
       lastMessage: text, updatedAt: TS()
     }, { merge: true });
     await db.collection('chats/' + cur.id + '/messages').add(msg);
