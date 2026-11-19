@@ -332,6 +332,23 @@ input:focus{border-color:var(--acc)}
 <div id='sheet'><div id='sbox'></div></div>
 <div class='toast' id='toast'></div>
 
+<script>
+/* تشخيص: يعرض أي خطأ على الشاشة بدل ما يبقى التطبيق فارغ */
+(function(){
+  function box(msg){
+    var d=document.getElementById('__err');
+    if(!d){d=document.createElement('div');d.id='__err';
+      d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#b00020;color:#fff;font:13px/1.5 monospace;padding:10px;direction:ltr;white-space:pre-wrap;max-height:40vh;overflow:auto';
+      (document.body||document.documentElement).appendChild(d);}
+    d.textContent+=msg+'\n';
+  }
+  window.addEventListener('error',function(e){box('ERROR: '+e.message+(e.lineno?' (line '+e.lineno+')':''));});
+  window.addEventListener('unhandledrejection',function(e){box('PROMISE: '+(e.reason&&e.reason.message||e.reason));});
+  window.addEventListener('load',function(){
+    if(typeof firebase==='undefined') box('Firebase لم يتحمّل - تأكد من الانترنت أو من حاجب الاعلانات');
+  });
+})();
+</script>
 <script src='https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js'></script>
 <script src='https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js'></script>
 <script src='https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js'></script>
@@ -877,4 +894,482 @@ $('cmute').onclick = () => {
   const stTxt = () => {
     if (!cur) return;
     st.textContent = Date.now() - typ < 4000 ? 'يكتب...'
-      : Date.now() - seen < 90000
+      : Date.now() - seen < 90000 ? 'متصل الآن'
+      : seen ? 'آخر ظهور ' + new Date(seen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+  };
+  setInterval(stTxt, 2000);
+
+  /* يكتب */
+  $('txt').addEventListener('input', () => {
+    if (!cur || !$('txt').value || Date.now() - lastT < 2500) return;
+    lastT = Date.now();
+    db.doc('users/' + me.uid).update({ typingTo: cur.uid, typingAt: Date.now() }).catch(() => {});
+  });
+
+  /* عرض الصور داخل الدردشة */
+  const obs = new MutationObserver(() => paint());
+  const paint = () => {
+    obs.disconnect();
+    [...msgs.children].forEach((el, i) => {
+      const old = el.querySelector('.pi'); if (old) old.remove();
+      const tx = el.querySelector(':scope > span'), src = imgs[i];
+      if (tx) tx.style.display = src ? 'none' : '';
+      if (!src) return;
+      const im = document.createElement('img');
+      im.className = 'pi'; im.src = src;
+      im.style.cssText = 'max-width:100%;border-radius:10px;display:block;margin-bottom:4px';
+      el.insertBefore(im, el.querySelector('small'));
+    });
+    obs.observe(msgs, { childList: true });
+  };
+  obs.observe(msgs, { childList: true });
+
+  /* ربط فتح الدردشة */
+  const _oc = openChat;
+  openChat = function (uid, name) {
+    _oc(uid, name); ping();
+    seen = typ = 0; imgs = []; st.textContent = '';
+    unPeer && unPeer(); unImg && unImg();
+    unPeer = db.doc('users/' + uid).onSnapshot(d => {
+      const x = d.data() || {};
+      seen = x.lastSeen ? x.lastSeen.toMillis() : 0;
+      typ = x.typingTo === me.uid ? (x.typingAt || 0) : 0;
+      stTxt();
+    }, () => {});
+    unImg = db.collection('chats/' + cur.id + '/messages').orderBy('createdAt').onSnapshot(s => {
+      imgs = s.docs.map(x => x.data().img || null);
+      setTimeout(paint, 80);
+    }, () => {});
+  };
+  $('back').addEventListener('click', () => { unPeer && unPeer(); unImg && unImg(); unPeer = unImg = null; });
+
+  /* إرسال صورة */
+  const pick = document.createElement('input');
+  pick.type = 'file'; pick.accept = 'image/*'; pick.style.display = 'none';
+  document.body.appendChild(pick);
+  at.onclick = () => pick.click();
+  pick.onchange = () => {
+    const f = pick.files[0]; pick.value = '';
+    if (!f || !cur) return;
+    if (me.prefs.blocked.includes(cur.uid)) return toast('هذا المستخدم محظور');
+    const im = new Image(), u = URL.createObjectURL(f);
+    im.onload = async () => {
+      const k = Math.min(1, 900 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+      c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(u);
+      const img = c.toDataURL('image/jpeg', 0.65);
+      try {
+        await db.doc('chats/' + cur.id).set({
+          members: [me.uid, cur.uid],
+          names: { [me.uid]: me.name || me.username, [cur.uid]: cur.name },
+          lastMessage: '📷 صورة', lastFrom: me.uid, updatedAt: TS()
+        }, { merge: true });
+        await db.collection('chats/' + cur.id + '/messages').add({ text: '📷 صورة', img, from: me.uid, createdAt: TS(), read: false });
+      } catch (e) { toast('تعذّر إرسال الصورة'); }
+    };
+    im.onerror = () => toast('هذا الملف ليس صورة');
+    im.src = u;
+  };
+})();
+  /* ===== معاينة قبل الإرسال + فيديو ===== */
+(function () {
+  const CLOUD = 'ضع_اسم_الكلاود', PRESET = 'ضع_اسم_البريسيت';
+  const old = $('att'), at = old.cloneNode(true);
+  old.replaceWith(at);
+  const msgs = $('msgs');
+  const pick = document.createElement('input');
+  pick.type = 'file'; pick.accept = 'image/*,video/*'; pick.style.display = 'none';
+  document.body.appendChild(pick);
+  at.onclick = () => pick.click();
+
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:50;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px';
+  ov.innerHTML = "<div id='pvbox' style='flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center'></div><div id='pvst' style='color:#cfd8e5;font-size:.9rem;min-height:1.2em'></div><div style='display:flex;gap:12px;width:100%;max-width:420px'><button id='pvno' style='flex:1;padding:13px;border-radius:12px;background:#ffffff26;color:#fff'>إلغاء</button><button id='pvok' style='flex:1;padding:13px;border-radius:12px;background:#3390ec;color:#fff;font-weight:700'>إرسال ➤</button></div>";
+  document.body.appendChild(ov);
+  const box = ov.querySelector('#pvbox'), pst = ov.querySelector('#pvst'), no = ov.querySelector('#pvno'), ok = ov.querySelector('#pvok');
+  let file = null, url = null, sending = false;
+  const close = () => { if (sending) return; ov.style.display = 'none'; box.innerHTML = ''; pst.textContent = ''; url && URL.revokeObjectURL(url); file = url = null; };
+  no.onclick = close;
+
+  pick.onchange = () => {
+    const f = pick.files[0]; pick.value = '';
+    if (!f || !cur) return;
+    if (me.prefs.blocked.includes(cur.uid)) return toast('هذا المستخدم محظور');
+    const isV = f.type.startsWith('video/'), isI = f.type.startsWith('image/');
+    if (!isV && !isI) return toast('اختار صورة أو فيديو');
+    if (isV && f.size > 50 * 1048576) return toast('الفيديو أكبر من 50MB');
+    file = f; url = URL.createObjectURL(f);
+    const el = document.createElement(isV ? 'video' : 'img');
+    el.src = url; el.style.cssText = 'max-width:100%;max-height:100%;border-radius:12px';
+    if (isV) { el.controls = true; el.playsInline = true; }
+    box.innerHTML = ''; box.appendChild(el);
+    pst.textContent = isV ? (f.size / 1048576).toFixed(1) + ' MB' : '';
+    ov.style.display = 'flex';
+  };
+
+  const compress = f => new Promise((res, rej) => {
+    const im = new Image(), u = URL.createObjectURL(f);
+    im.onload = () => {
+      const k = Math.min(1, 900 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+      c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg', 0.65));
+    };
+    im.onerror = rej; im.src = u;
+  });
+
+  const upload = f => new Promise((res, rej) => {
+    const x = new XMLHttpRequest(), fd = new FormData();
+    fd.append('file', f); fd.append('upload_preset', PRESET);
+    x.open('POST', 'https://api.cloudinary.com/v1_1/' + CLOUD + '/video/upload');
+    x.upload.onprogress = e => { if (e.lengthComputable) pst.textContent = 'جاري الرفع ' + Math.round(e.loaded / e.total * 100) + '%'; };
+    x.onload = () => { try { const j = JSON.parse(x.responseText); j.secure_url ? res(j.secure_url) : rej(new Error('up')); } catch (e) { rej(e); } };
+    x.onerror = () => rej(new Error('net'));
+    x.send(fd);
+  });
+
+  const sendMsg = async (extra, label) => {
+    await db.doc('chats/' + cur.id).set({
+      members: [me.uid, cur.uid],
+      names: { [me.uid]: me.name || me.username, [cur.uid]: cur.name },
+      lastMessage: label, lastFrom: me.uid, updatedAt: TS()
+    }, { merge: true });
+    await db.collection('chats/' + cur.id + '/messages').add(Object.assign({ text: label, from: me.uid, createdAt: TS(), read: false }, extra));
+  };
+
+  ok.onclick = async () => {
+    if (!file || sending) return;
+    const f = file, isV = f.type.startsWith('video/');
+    sending = true; ok.disabled = true;
+    try {
+      if (isV) {
+        if (CLOUD.startsWith('ضع')) throw new Error('cfg');
+        await sendMsg({ vid: await upload(f) }, '🎬 فيديو');
+      } else {
+        await sendMsg({ img: await compress(f) }, '📷 صورة');
+      }
+      sending = false; ok.disabled = false; close();
+    } catch (e) {
+      sending = false; ok.disabled = false;
+      pst.textContent = e.message === 'cfg' ? 'لازم تحط اسم Cloudinary بالكود أول' : 'تعذّر الإرسال، جرّب مرة ثانية';
+    }
+  };
+
+  /* عرض الفيديوهات */
+  let vids = [], unV = null;
+  const paintV = () => {
+    vobs.disconnect();
+    [...msgs.children].forEach((el, i) => {
+      const o = el.querySelector('.pv'); if (o) o.remove();
+      const src = vids[i]; if (!src) return;
+      const tx = el.querySelector(':scope > span'); if (tx) tx.textContent = '';
+      const v = document.createElement('video');
+      v.className = 'pv'; v.src = src; v.controls = true; v.preload = 'metadata'; v.playsInline = true;
+      v.style.cssText = 'max-width:100%;border-radius:10px;display:block;margin-bottom:4px';
+      v.onclick = e => e.stopPropagation();
+      el.insertBefore(v, el.querySelector('small'));
+    });
+    vobs.observe(msgs, { childList: true });
+  };
+  const vobs = new MutationObserver(paintV);
+  vobs.observe(msgs, { childList: true });
+
+  const _oc = openChat;
+  openChat = function (uid, name) {
+    _oc(uid, name);
+    vids = []; unV && unV();
+    unV = db.collection('chats/' + cur.id + '/messages').orderBy('createdAt').onSnapshot(s => {
+      vids = s.docs.map(x => x.data().vid || null);
+      setTimeout(paintV, 200);
+    }, () => {});
+  };
+  $('back').addEventListener('click', () => { unV && unV(); unV = null; });
+})();
+  /* ===== رسائل صوتية ===== */
+(function () {
+  const msgs = $('msgs'), send = document.querySelector('#chat .send');
+  const mic = document.createElement('button');
+  mic.type = 'button'; mic.textContent = '🎤';
+  mic.style.cssText = 'background:none;font-size:1.4rem;width:40px;flex:none';
+  send.insertBefore(mic, $('snd'));
+
+  const bar = document.createElement('div');
+  bar.style.cssText = 'display:none;align-items:center;gap:12px;padding:10px 14px;background:rgba(11,19,34,.92);border-top:1px solid rgba(217,183,122,.25);color:#fff;direction:ltr';
+  bar.innerHTML = "<button class='rx' style='font-size:1.3rem;color:#e5484d'>✕</button><span class='rt' style='flex:1;text-align:center'>🔴 0:00</span><button class='rs' style='background:#3390ec;color:#fff;width:44px;height:44px;border-radius:50%'>➤</button>";
+  send.parentNode.insertBefore(bar, send);
+  const rt = bar.querySelector('.rt');
+
+  const MAX = 60; // ثانية، حتى ما نتجاوز حد Firestore (1MB)
+  let rec = null, stream = null, chunks = [], t0 = 0, tick = null, cancelled = false, chat = null, mime = '';
+
+  async function start() {
+    if (rec || !cur) return;
+    if (me.prefs.blocked.includes(cur.uid)) return toast('هذا المستخدم محظور');
+    if (call) return toast('أنت داخل مكالمة');
+    if (!navigator.mediaDevices || !window.MediaRecorder) return toast('المتصفح ما يدعم التسجيل');
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+    catch (e) { return toast('لازم تسمح للمايك'); }
+    mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'].find(t => MediaRecorder.isTypeSupported(t)) || '';
+    const o = { audioBitsPerSecond: 24000 }; if (mime) o.mimeType = mime;
+    chat = cur; chunks = []; cancelled = false;
+    rec = new MediaRecorder(stream, o);
+    rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+    rec.onstop = finish;
+    rec.start(); t0 = Date.now();
+    send.style.display = 'none'; bar.style.display = 'flex';
+    tick = setInterval(() => {
+      const s = Math.floor((Date.now() - t0) / 1000);
+      rt.textContent = '🔴 ' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+      if (s >= MAX) stop(false);
+    }, 250);
+  }
+  function stop(cancel) {
+    if (!rec) return;
+    cancelled = cancel; clearInterval(tick);
+    if (rec.state !== 'inactive') rec.stop();
+  }
+  async function finish() {
+    const dur = (Date.now() - t0) / 1000;
+    const type = (rec.mimeType || mime || 'audio/webm').split(';')[0];
+    stream.getTracks().forEach(t => t.stop());
+    rec = stream = null;
+    bar.style.display = 'none'; send.style.display = ''; rt.textContent = '🔴 0:00';
+    if (cancelled || dur < 1) return;
+    const aud = await new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(new Blob(chunks, { type })); });
+    if (aud.length > 900000) return toast('التسجيل طويل، قصّره');
+    try {
+      await db.doc('chats/' + chat.id).set({
+        members: [me.uid, chat.uid],
+        names: { [me.uid]: me.name || me.username, [chat.uid]: chat.name },
+        lastMessage: '🎤 رسالة صوتية', lastFrom: me.uid, updatedAt: TS()
+      }, { merge: true });
+      await db.collection('chats/' + chat.id + '/messages').add({ text: '🎤 رسالة صوتية', aud, from: me.uid, createdAt: TS(), read: false });
+    } catch (e) { toast('تعذّر إرسال الصوت'); }
+  }
+  mic.onclick = start;
+  bar.querySelector('.rx').onclick = () => stop(true);
+  bar.querySelector('.rs').onclick = () => stop(false);
+
+  /* عرض الرسائل الصوتية */
+  let auds = [], unA = null;
+  const paint = () => {
+    obs.disconnect();
+    [...msgs.children].forEach((el, i) => {
+      const a = auds[i]; if (!a || el.querySelector('.pa')) return;
+      const tx = el.querySelector(':scope > span'); if (tx) tx.style.display = 'none';
+      const au = document.createElement('audio');
+      au.className = 'pa'; au.controls = true; au.preload = 'metadata'; au.src = a;
+      au.style.cssText = 'width:230px;max-width:100%;height:40px;display:block;margin-bottom:2px';
+      au.onclick = e => e.stopPropagation();
+      el.insertBefore(au, el.querySelector('small'));
+    });
+    obs.observe(msgs, { childList: true });
+  };
+  const obs = new MutationObserver(paint);
+  obs.observe(msgs, { childList: true });
+
+  const _oc = openChat;
+  openChat = function (uid, name) {
+    _oc(uid, name);
+    auds = []; unA && unA();
+    unA = db.collection('chats/' + cur.id + '/messages').orderBy('createdAt').onSnapshot(s => {
+      auds = s.docs.map(x => x.data().aud || null);
+      setTimeout(paint, 250);
+    }, () => {});
+  };
+  $('back').addEventListener('click', () => { unA && unA(); unA = null; stop(true); });
+})();
+   
+/* ===== القنوات ===== */
+(function () {
+  const st = document.createElement('style');
+  st.textContent = `
+#fab{position:absolute;left:18px;bottom:96px;width:56px;height:56px;border-radius:50%;background:linear-gradient(#4a8ae0,#2f6bc4);color:#fff;font-size:1.5rem;z-index:5;border:1.5px solid #c9a15a;box-shadow:0 6px 18px rgba(47,107,196,.55)}
+#list:not([data-v=c]) #fab{display:none}
+#chan{background:#0b1322;--muted:#aab6c8;--text:#f5f5f5;--line:rgba(217,183,122,.25);--acc:#6ab3f3;color:#f5f5f5}
+#chan .top,#chan .send{background:rgba(11,19,34,.95);border-color:rgba(217,183,122,.25);color:#f5f5f5}
+#chan .send input,#cov input{background:rgba(255,255,255,.08);border-color:rgba(217,183,122,.35);color:#fff}
+#cposts{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+#cposts .m{align-self:stretch;max-width:100%;background:rgba(24,37,51,.9);color:#f5f5f5;white-space:pre-wrap}
+#chsubb{margin:10px;padding:14px;border-radius:12px;background:#3390ec;color:#fff;font-weight:700}
+#chro{padding:14px;text-align:center;color:#aab6c8;font-size:.9rem}`;
+  document.head.appendChild(st);
+
+  /* زر الإنشاء */
+  const fab = document.createElement('button');
+  fab.id = 'fab'; fab.type = 'button'; fab.textContent = '✎';
+  $('list').appendChild(fab);
+
+  /* شاشة القناة */
+  const scr = document.createElement('div');
+  scr.id = 'chan'; scr.className = 'screen';
+  scr.innerHTML = `
+<div class='top ct'>
+  <button class='back' id='chback'>←</button>
+  <div class='av' id='chav' style='width:40px;height:40px;font-size:1rem'></div>
+  <div style='flex:1;min-width:0'><h2 id='chtitle'></h2><small id='chsub' style='display:block;color:#aab6c8;font-size:.75rem'></small></div>
+  <button class='ic' id='chmenu'>⋮</button>
+</div>
+<div id='cposts'></div>
+<div class='send' id='chcomp' style='display:none'><input id='chtxt' placeholder='اكتب منشور...'><button id='chsnd'>➤</button></div>
+<button id='chsubb' style='display:none'>اشتراك في القناة</button>
+<div id='chro' style='display:none'>قناة للقراءة فقط</div>`;
+  document.body.insertBefore(scr, $('sheet'));
+
+  /* نافذة الإنشاء */
+  const ov = document.createElement('div');
+  ov.id = 'cov';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40;display:none;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML = `<div style='background:#1f2c3a;color:#fff;width:100%;max-width:400px;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:10px'>
+<b style='font-size:1.1rem'>📢 إنشاء قناة</b>
+<input id='cnm' maxlength='40' placeholder='اسم القناة'>
+<input id='chd' maxlength='20' placeholder='معرف القناة (إنجليزي 4-20)' autocapitalize='none' style='direction:ltr;text-align:left'>
+<div class='err' id='cer'></div>
+<div style='display:flex;gap:10px'><button id='cno' style='flex:1;padding:12px;border-radius:12px;background:#ffffff26'>إلغاء</button><button id='cok' style='flex:1;padding:12px;border-radius:12px;background:#3390ec;font-weight:700'>إنشاء</button></div></div>`;
+  document.body.appendChild(ov);
+
+  let ch = null, un1 = null, un2 = null, chs = [], unList = null;
+
+  /* ---------- إنشاء ---------- */
+  fab.onclick = () => { $('cnm').value = $('chd').value = $('cer').textContent = ''; ov.style.display = 'flex'; $('cnm').focus(); };
+  $('cno').onclick = () => ov.style.display = 'none';
+  $('cok').onclick = async () => {
+    const name = $('cnm').value.trim(), h = $('chd').value.trim().toLowerCase(), er = $('cer');
+    if (!name) return er.textContent = 'اكتب اسم القناة';
+    if (!/^[a-z0-9_]{4,20}$/.test(h)) return er.textContent = 'المعرف: 4 إلى 20 حرف إنجليزي أو رقم أو _';
+    $('cok').disabled = true; er.textContent = '';
+    try {
+      const id = db.collection('channels').doc().id;
+      await db.runTransaction(async t => {
+        const r = db.doc('channelNames/' + h);
+        if ((await t.get(r)).exists) throw new Error('taken');
+        t.set(r, { id });
+        t.set(db.doc('channels/' + id), { name, handle: h, owner: me.uid, subs: [me.uid], lastPost: '', createdAt: TS(), updatedAt: TS() });
+      });
+      ov.style.display = 'none'; openCh(id, name);
+    } catch (e) { er.textContent = e.message === 'taken' ? 'المعرف مأخوذ، جرّب غيره' : 'تعذّر إنشاء القناة'; }
+    $('cok').disabled = false;
+  };
+
+  /* ---------- فتح القناة ---------- */
+  const head = () => {
+    $('chtitle').textContent = ch.name; avatar($('chav'), ch.name);
+    $('chsub').textContent = (ch.subs || []).length + ' مشترك' + (ch.handle ? ' • #' + ch.handle : '');
+  };
+  const bot = () => {
+    const own = ch.owner === me.uid, sub = (ch.subs || []).includes(me.uid);
+    $('chcomp').style.display = own ? 'flex' : 'none';
+    $('chsubb').style.display = !own && !sub ? 'block' : 'none';
+    $('chro').style.display = !own && sub ? 'block' : 'none';
+  };
+  function openCh(id, name) {
+    ch = { id, name, subs: [], owner: '' };
+    un1 && un1(); un2 && un2();
+    $('cposts').innerHTML = ''; $('cposts').dataset.init = '';
+    $('chcomp').style.display = $('chsubb').style.display = $('chro').style.display = 'none';
+    head(); show('x'); scr.classList.add('on');
+    un1 = db.doc('channels/' + id).onSnapshot(d => {
+      if (!d.exists) { toast('القناة غير موجودة'); closeCh(); return; }
+      ch = { id, ...d.data() }; head(); bot();
+    }, () => { toast('تعذّر فتح القناة'); closeCh(); });
+    un2 = db.collection('channels/' + id + '/posts').orderBy('createdAt').onSnapshot(s => {
+      const box = $('cposts'), near = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+      box.innerHTML = '';
+      s.docs.forEach(x => {
+        const m = x.data(), el = document.createElement('div'); el.className = 'm';
+        const p = document.createElement('span'); p.textContent = m.text;
+        const t = document.createElement('small');
+        t.textContent = m.createdAt ? m.createdAt.toDate().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '...';
+        el.append(p, t);
+        if (ch.owner === me.uid) el.onclick = () => sheet([{ l: '🗑 حذف المنشور', c: 'del', f: () => x.ref.delete().catch(() => toast('تعذّر الحذف')) }]);
+        box.appendChild(el);
+      });
+      if (near || !box.dataset.init) { box.scrollTop = box.scrollHeight; box.dataset.init = 1; }
+    }, () => {});
+  }
+  function closeCh() {
+    un1 && un1(); un2 && un2(); un1 = un2 = null; ch = null;
+    scr.classList.remove('on'); show('list');
+  }
+  $('chback').onclick = closeCh;
+  $('out').addEventListener('click', () => { un1 && un1(); un2 && un2(); scr.classList.remove('on'); });
+
+  /* ---------- نشر / اشتراك / قائمة ---------- */
+  async function post() {
+    const t = $('chtxt').value.trim();
+    if (!t || !ch || ch.owner !== me.uid) return;
+    $('chtxt').value = '';
+    try {
+      await db.collection('channels/' + ch.id + '/posts').add({ text: t, createdAt: TS() });
+      await db.doc('channels/' + ch.id).update({ lastPost: t.slice(0, 80), updatedAt: TS() });
+    } catch (e) { toast('تعذّر النشر'); }
+  }
+  $('chsnd').onclick = post;
+  $('chtxt').onkeydown = e => { if (e.key === 'Enter') post(); };
+  $('chsubb').onclick = () => db.doc('channels/' + ch.id).update({ subs: FV.arrayUnion(me.uid) }).catch(() => toast('تعذّر الاشتراك'));
+  $('chmenu').onclick = () => {
+    const it = [];
+    if (ch.handle) it.push({ l: '🔗 نسخ معرف القناة', f: () => navigator.clipboard && navigator.clipboard.writeText('#' + ch.handle).then(() => toast('تم النسخ'), () => {}) });
+    if (ch.owner !== me.uid && (ch.subs || []).includes(me.uid))
+      it.push({ l: '🚪 إلغاء الاشتراك', c: 'del', f: async () => { try { await db.doc('channels/' + ch.id).update({ subs: FV.arrayRemove(me.uid) }); closeCh(); } catch (e) { toast('تعذّر التنفيذ'); } } });
+    if (it.length) sheet(it);
+  };
+
+  /* ---------- القنوات داخل قائمة المحادثات ---------- */
+  const box = $('chats');
+  const paint = () => {
+    cobs.disconnect();
+    box.querySelectorAll('.row.ch').forEach(x => x.remove());
+    if (chs.length) { const e = box.querySelector('.empty'); e && e.remove(); }
+    const ms = c => (c.updatedAt && c.updatedAt.toMillis()) || 9e15;
+    [...chs].sort((a, b) => ms(a) - ms(b)).forEach(c => {
+      const el = document.createElement('div'); el.className = 'row ch';
+      el.style.setProperty('--c', col(c.name));
+      el.innerHTML = `<div class='av'></div><div class='t'><div class='h'><div class='n'></div><div class='d'></div></div><div class='l'></div></div>`;
+      avatar(el.querySelector('.av'), c.name);
+      el.querySelector('.n').textContent = '📢 ' + c.name;
+      el.querySelector('.d').textContent = hm(c.updatedAt);
+      el.querySelector('.l').textContent = c.lastPost || 'لا توجد منشورات بعد';
+      el.onclick = () => openCh(c.id, c.name);
+      box.insertBefore(el, box.firstChild);
+    });
+    cobs.observe(box, { childList: true });
+  };
+  const cobs = new MutationObserver(paint);
+  cobs.observe(box, { childList: true });
+
+  const _enter = enter;
+  enter = async function (u) {
+    await _enter(u);
+    unList && unList(); unList = null;
+    if (!me) return;
+    unList = db.collection('channels').where('subs', 'array-contains', me.uid).onSnapshot(s => {
+      chs = s.docs.map(d => ({ id: d.id, ...d.data() })); paint();
+    }, () => {});
+  };
+  const _cl = cleanup;
+  cleanup = function () { unList && unList(); unList = null; chs = []; scr.classList.remove('on'); _cl(); };
+
+  /* ---------- بحث بـ #معرف ---------- */
+  $('q').placeholder = '@username أو ID أو #قناة';
+  const _find = find;
+  const find2 = async () => {
+    const raw = $('q').value.trim();
+    if (raw[0] !== '#') return _find();
+    const h = raw.slice(1).toLowerCase();
+    if (!h) return;
+    try {
+      const d = await db.doc('channelNames/' + h).get();
+      if (!d.exists) return toast('ما لقينا قناة بهذا المعرف');
+      const c = await db.doc('channels/' + d.data().id).get();
+      if (!c.exists) return toast('ما لقينا قناة بهذا المعرف');
+      $('q').value = ''; openCh(c.id, c.data().name);
+    } catch (e) { toast('تعذّر البحث'); }
+  };
+  $('find').onclick = find2;
+  $('q').onkeydown = e => { if (e.key === 'Enter') find2(); };
+})();
+</script>
+</body>
+        </html>
