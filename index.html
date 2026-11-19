@@ -860,6 +860,105 @@ $('cmute').onclick = () => {
   const t = call.stream.getAudioTracks()[0]; t.enabled = !t.enabled;
   $('cmute').textContent = t.enabled ? '🎙' : '🔇';
 };
-</script>
+  /* ===== متصل الآن + يكتب + إرسال صور ===== */
+(function () {
+  const ct = $('ctitle'), w = document.createElement('div'), st = document.createElement('small');
+  w.style.cssText = 'flex:1;min-width:0';
+  st.id = 'cst'; st.style.cssText = 'display:block;color:#aab6c8;font-size:.75rem';
+  ct.parentNode.insertBefore(w, ct); w.append(ct, st);
+  const at = document.createElement('button');
+  at.id = 'att'; at.type = 'button'; at.textContent = '📎';
+  at.style.cssText = 'background:none;font-size:1.4rem;width:40px;flex:none';
+  $('txt').parentNode.insertBefore(at, $('txt'));
+
+  let unPeer = null, unImg = null, imgs = [], seen = 0, typ = 0, lastT = 0;
+  const msgs = $('msgs');
+
+  /* متصل الآن */
+  const ping = () => { if (me && !document.hidden) db.doc('users/' + me.uid).update({ lastSeen: TS() }).catch(() => {}); };
+  setInterval(ping, 45000);
+  document.addEventListener('visibilitychange', ping);
+  const stTxt = () => {
+    if (!cur) return;
+    st.textContent = Date.now() - typ < 4000 ? 'يكتب...'
+      : Date.now() - seen < 90000 ? 'متصل الآن'
+      : seen ? 'آخر ظهور ' + new Date(seen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+  };
+  setInterval(stTxt, 2000);
+
+  /* يكتب */
+  $('txt').addEventListener('input', () => {
+    if (!cur || !$('txt').value || Date.now() - lastT < 2500) return;
+    lastT = Date.now();
+    db.doc('users/' + me.uid).update({ typingTo: cur.uid, typingAt: Date.now() }).catch(() => {});
+  });
+
+  /* عرض الصور داخل الدردشة */
+  const obs = new MutationObserver(() => paint());
+  const paint = () => {
+    obs.disconnect();
+    [...msgs.children].forEach((el, i) => {
+      const old = el.querySelector('.pi'); if (old) old.remove();
+      const tx = el.querySelector(':scope > span'), src = imgs[i];
+      if (tx) tx.style.display = src ? 'none' : '';
+      if (!src) return;
+      const im = document.createElement('img');
+      im.className = 'pi'; im.src = src;
+      im.style.cssText = 'max-width:100%;border-radius:10px;display:block;margin-bottom:4px';
+      el.insertBefore(im, el.querySelector('small'));
+    });
+    obs.observe(msgs, { childList: true });
+  };
+  obs.observe(msgs, { childList: true });
+
+  /* ربط فتح الدردشة */
+  const _oc = openChat;
+  openChat = function (uid, name) {
+    _oc(uid, name); ping();
+    seen = typ = 0; imgs = []; st.textContent = '';
+    unPeer && unPeer(); unImg && unImg();
+    unPeer = db.doc('users/' + uid).onSnapshot(d => {
+      const x = d.data() || {};
+      seen = x.lastSeen ? x.lastSeen.toMillis() : 0;
+      typ = x.typingTo === me.uid ? (x.typingAt || 0) : 0;
+      stTxt();
+    }, () => {});
+    unImg = db.collection('chats/' + cur.id + '/messages').orderBy('createdAt').onSnapshot(s => {
+      imgs = s.docs.map(x => x.data().img || null);
+      setTimeout(paint, 80);
+    }, () => {});
+  };
+  $('back').addEventListener('click', () => { unPeer && unPeer(); unImg && unImg(); unPeer = unImg = null; });
+
+  /* إرسال صورة */
+  const pick = document.createElement('input');
+  pick.type = 'file'; pick.accept = 'image/*'; pick.style.display = 'none';
+  document.body.appendChild(pick);
+  at.onclick = () => pick.click();
+  pick.onchange = () => {
+    const f = pick.files[0]; pick.value = '';
+    if (!f || !cur) return;
+    if (me.prefs.blocked.includes(cur.uid)) return toast('هذا المستخدم محظور');
+    const im = new Image(), u = URL.createObjectURL(f);
+    im.onload = async () => {
+      const k = Math.min(1, 900 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+      c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(u);
+      const img = c.toDataURL('image/jpeg', 0.65);
+      try {
+        await db.doc('chats/' + cur.id).set({
+          members: [me.uid, cur.uid],
+          names: { [me.uid]: me.name || me.username, [cur.uid]: cur.name },
+          lastMessage: '📷 صورة', lastFrom: me.uid, updatedAt: TS()
+        }, { merge: true });
+        await db.collection('chats/' + cur.id + '/messages').add({ text: '📷 صورة', img, from: me.uid, createdAt: TS(), read: false });
+      } catch (e) { toast('تعذّر إرسال الصورة'); }
+    };
+    im.onerror = () => toast('هذا الملف ليس صورة');
+    im.src = u;
+  };
+})();
+   </script>
 </body>
         </html>
