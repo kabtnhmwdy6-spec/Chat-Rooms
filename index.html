@@ -599,7 +599,6 @@ async function ensureAIChat() {
 }
 
 /* ===== Gemini AI ===== */
-const GEMINI_API_KEY = 'AQ.Ab8RN6KI0Wa5Xnl37omVzifwDU7Tm0gjSzTW6kAAC1q0o-HrIw'; 
 
 async function aiReply(userText, chatId) {
   if (!cur || !cur.isAI) return;
@@ -610,7 +609,7 @@ async function aiReply(userText, chatId) {
   });
   
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const url = `https://gimineproxy.kabtnhmwdy6.workers.dev`;
     
     const payload = {
       contents: [{
