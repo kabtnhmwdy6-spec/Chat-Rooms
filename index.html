@@ -626,7 +626,13 @@ async function aiReply(userText, chatId) {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     
     const data = await res.json();
-    let reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'ما وصلني رد، جرّب مرة ثانية.';
+    if (data.error) {
+  let reply = '❌ خطأ من جوجل: ' + data.error.message;
+  await typingRef.delete();
+  await db.collection('chats/' + chatId + '/messages').add({ text: reply, from: AI_UID, createdAt: TS(), read: false });
+  return;
+}
+let reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'ما وصلني رد، جرّب مرة ثانية.';
 
     // حذف علامة "يكتب..." وإضافة الرد
     await typingRef.delete();
